@@ -9,6 +9,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    this->userInterface = UserInterface();
 }
 
 MainWindow::~MainWindow()
@@ -19,7 +20,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_actionMap_of_the_porous_media_triggered()
 {
-    BinaryMapWindow binaryMapWindow;
+    BinaryMapWindow binaryMapWindow(nullptr, this);
     binaryMapWindow.setModal(true);
     binaryMapWindow.exec();
 }

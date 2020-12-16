@@ -9,17 +9,21 @@ CONFIG += c++11
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    binarymap.cpp \
     binarymapwindow.cpp \
     main.cpp \
     mainwindow.cpp \
     resultswindow.cpp \
-    solverwindow.cpp
+    solverwindow.cpp \
+    userinterface.cpp
 
 HEADERS += \
+    binarymap.h \
     binarymapwindow.h \
     mainwindow.h \
     resultswindow.h \
-    solverwindow.h
+    solverwindow.h \
+    userinterface.h
 
 FORMS += \
     binarymapwindow.ui \
