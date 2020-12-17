@@ -26,7 +26,7 @@ SolverWindow::SolverWindow(QWidget *parent, MainWindow* mw) :
 
         ui->info_from_solver->setText(">>Grid of automata cells initialization in progress...");
         this->mw->userInterface.SetSolver();
-        ui->info_from_solver->append(">>Grid of automata cells was initialized");
+        ui->info_from_solver->append(">>Grid of automata cells initialization completed");
 
         //enable all features
         ui->comboBox_direction->setEnabled(true);
@@ -52,5 +52,21 @@ void SolverWindow::on_pushButton_simulation_clicked()
         return;
     }
 
+    double v0 = qVelocity.toDouble();
+    int iter = qIterations.toInt();
+    int direction = 0;
+    if( qDirection == "Left" )      direction = 1;
+    if( qDirection == "Right" )     direction = 2;
+    if( qDirection == "Top" )       direction = 3;
+    if( qDirection == "Bottom" )    direction = 4;
 
+    ui->info_from_solver->append(">>Setting boundary conditions in progress...");
+    this->mw->userInterface.SetBoundaryConditions(v0, direction);
+    ui->info_from_solver->append(">>Setting boundary conditions completed");
+
+    this->mw->userInterface.SetMaxIter(iter);
+
+    ui->info_from_solver->append(">>Simulation in progress...");
+    this->mw->userInterface.StartSimulation();
+    ui->info_from_solver->append(">>Simulation completed");
 }

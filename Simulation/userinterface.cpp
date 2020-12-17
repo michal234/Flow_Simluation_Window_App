@@ -29,3 +29,18 @@ void UserInterface::SetSolver()
     if( !this->bm.IsEmpty() )
         this->solver.CellGridInitialization(this->bm);
 }
+
+void UserInterface::SetBoundaryConditions(double v, int direction)
+{
+    this->solver.SetBoundaryConditions(v, direction);
+}
+
+void UserInterface::SetMaxIter(int iter)
+{
+    this->solver.SetMaxIter(iter);
+}
+
+void UserInterface::StartSimulation()
+{
+    this->solver.Simulate();
+}

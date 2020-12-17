@@ -10,6 +10,7 @@ Solver::Solver()
     cellGridRows = 0;
     v_start = 0.0;
     fluid_input = 0.0;
+    maxIter = 100;
 }
 
 bool Solver::GetInitialized()
@@ -24,13 +25,10 @@ bool Solver::GetBoudaryConditions()
 
 void Solver::CellGridInitialization(BinaryMap bm)
 {
-    //cout << "Trwa inicjalizacja siatki automatow...\n";
-
     cellGridRows = bm.GetRows();
     cellGridCols = bm.GetCols();
     for (int i = 0; i < cellGridRows; i++)
     {
-        //vector<Cell> vc = vector<Cell>();
         for (int j = 0; j < cellGridCols; j++)
         {
             int element = bm.GetElement(i, j);
@@ -39,16 +37,14 @@ void Solver::CellGridInitialization(BinaryMap bm)
 
             if (element == 0)	//solid
                 fluid = false;
-            if( i==0 || i == cellGridRows-1 || j ==0 || j==cellGridCols-1 )
+            if( i==0 || i == cellGridRows-1 || j==0 || j==cellGridCols-1 )
                 boundary = true;
 
             Cell cell(fluid, boundary, i, j);
-            //vc.push_back(&cell);
 
             CellGrid.push_back(cell);
 
         }
-        //CellGrid.push_back(vc);
     }
 
     for (int i = 0; i < cellGridRows; i++)
@@ -56,49 +52,69 @@ void Solver::CellGridInitialization(BinaryMap bm)
         for (int j = 0; j < cellGridCols; j++)
         {
             if (CellGrid[i * cellGridCols + j].GetFluid())
-            //if( CellGrid[i][j].GetFluid() )
             {
                 FluidCells.push_back(&CellGrid[i*cellGridCols+j]);
-                //FluidCells.push_back(&CellGrid[i][j]);
             }
         }
     }
 
     initialized = true;
-
-    //cout << "Inicjalizacja zakonczona\n";
 }
 
-void Solver::SetBoundaryConditions(double v)
+void Solver::SetBoundaryConditions(double v, int direction)
 {
-    //cout << "Trwa ustalanie warunkow brzegowych...\n";
-
     for (int i = 0; i < FluidCells.size(); i++)
     {
-        if (FluidCells[i]->GetY() == 0 && FluidCells[i]->GetFluid())
+        if (FluidCells[i]->GetFluid())
         {
-            FluidCells[i]->SetLeftInput(v);
-            FluidCells[i]->SetSource();
-            fluid_input += v;
-        }
-        if (FluidCells[i]->GetY() == cellGridCols - 1 && FluidCells[i]->GetFluid())
-        {
-            FluidCells[i]->SetOutlet();
+            switch(direction)
+            {
+            case 1:
+                FluidCells[i]->SetLeftInput(v);
+                if( FluidCells[i]->GetY() == 0 )
+                {
+                    FluidCells[i]->SetSource();
+                    fluid_input += v;
+                }
+                break;
+
+            case 2:
+                FluidCells[i]->SetRightInput(v);
+                if( FluidCells[i]->GetY() == cellGridCols - 1 )
+                {
+                    FluidCells[i]->SetSource();
+                    fluid_input += v;
+                }
+                break;
+
+            case 3:
+                FluidCells[i]->SetTopInput(v);
+                if( FluidCells[i]->GetX() == 0 )
+                {
+                    FluidCells[i]->SetSource();
+                    fluid_input += v;
+                }
+                break;
+
+            case 4:
+                FluidCells[i]->SetBottomInput(v);
+                if( FluidCells[i]->GetX() == cellGridRows - 1 )
+                {
+                    FluidCells[i]->SetSource();
+                    fluid_input += v;
+                }
+                break;
+            }
         }
     }
-    /*for (int i = 0; i < cellGridRows; i++)
-    {
-        if (CellGrid[i][0]->GetFluid())
-        {
-            CellGrid[i][0]->SetLeftInput(v);
-            CellGrid[i][0]->SetSource();
-        }
-    }*/
 
     boundaryConditions = true;
     v_start = v;
+}
 
-    //cout << "Ustalanie warunkow brzegowych zakonczone\n";
+void Solver::SetMaxIter(int iter)
+{
+    this->maxIter = iter;
 }
 
 vector<Cell> Solver::Simulate()
@@ -108,9 +124,7 @@ vector<Cell> Solver::Simulate()
 
     int unbalancedCells = 0;
     int x = 0;
-    bool outlet = false;
 
-    //cout << "Trwa symulacja...\n";
     do
     {
         //UpdateGrid();
@@ -122,22 +136,14 @@ vector<Cell> Solver::Simulate()
             {
                 //FluidCells[i]->FluidFlow();
                 unbalancedCells++;
-                if( FluidCells[i]->GetOutlet() )
-                    outlet = true;
             }
         }
         //Standarization();
         UpdateGrid();
-        //ShowStep();
-        //cout << endl<< "Liczba komorek niezbilansowanych: " << unbalancedCells << endl;
-        //cout << endl << endl;
-        if( outlet )
-            x++;
+        ShowStep();
+        x++;
 
-    //}while(unbalancedCells != 0);
-    }while(x < 200);
-
-    //cout << "Symulacja zakonczona\n";
+    }while(x < this->maxIter && unbalancedCells != 0);
 
     //Standarization();
     //UpdateGrid();
@@ -446,6 +452,7 @@ void Solver::ShowStep()
         }
         cout << endl;
     }
+    cout << endl << endl;
 }
 
 void Solver::Standarization()

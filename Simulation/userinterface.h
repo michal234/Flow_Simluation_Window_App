@@ -14,6 +14,9 @@ public:
     bool BinaryMapIsEmpty();
 
     void SetSolver();
+    void SetBoundaryConditions(double v, int direction);
+    void SetMaxIter(int iter);
+    void StartSimulation();
 
 private:
     BinaryMap bm;
