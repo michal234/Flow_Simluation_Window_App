@@ -13,6 +13,7 @@ public:
     int GetRows();
     int GetCols();
     int GetElement(int i, int j);
+    QBitmap GetImage();
 
 private:
     QBitmap input;

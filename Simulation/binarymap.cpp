@@ -30,3 +30,8 @@ int BinaryMap::GetElement(int i, int j) //return the value of specified pixel
 {
     return this->input.toImage().pixelColor(i, j).value();
 }
+
+QBitmap BinaryMap::GetImage()
+{
+    return this->input;
+}

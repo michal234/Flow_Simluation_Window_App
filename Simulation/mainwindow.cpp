@@ -27,7 +27,7 @@ void MainWindow::on_actionMap_of_the_porous_media_triggered()
 
 void MainWindow::on_actionSimulate_triggered()
 {
-    SolverWindow solverWindow;
+    SolverWindow solverWindow(nullptr, this);
     solverWindow.setModal(true);
     solverWindow.exec();
 }

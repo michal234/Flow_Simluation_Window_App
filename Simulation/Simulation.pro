@@ -11,17 +11,21 @@ CONFIG += c++11
 SOURCES += \
     binarymap.cpp \
     binarymapwindow.cpp \
+    cell.cpp \
     main.cpp \
     mainwindow.cpp \
     resultswindow.cpp \
+    solver.cpp \
     solverwindow.cpp \
     userinterface.cpp
 
 HEADERS += \
     binarymap.h \
     binarymapwindow.h \
+    cell.h \
     mainwindow.h \
     resultswindow.h \
+    solver.h \
     solverwindow.h \
     userinterface.h
 

@@ -1,0 +1,1898 @@
+#include "cell.h"
+
+Cell::Cell()
+{
+    input_top = input_right = input_bottom = input_left = 0.0;
+    input_top_next = input_right_next = input_bottom_next = input_left_next = 0.0;
+    input_total = 0.0;
+
+    output_top = output_right = output_bottom = output_left = 0.0;
+    output_top_next = output_right_next = output_bottom_next = output_left_next = 0.0;
+    output_total = output_total_next = 0.0;
+
+    fluid_amount = 0.0;
+    velocity = 0.0;
+
+    typeOfNeighbourhood = 0;
+    typeOfNeighbourhoodOnSlant = 0;
+
+    x = y = 0;
+
+    fluid = source = boundary = outlet = outer_boundary = false;
+}
+
+Cell::Cell(bool fluid, bool outer)
+{
+    this->fluid = fluid;
+    this->outer_boundary = outer;
+
+    input_top = input_right = input_bottom = input_left = 0.0;
+    input_top_next = input_right_next = input_bottom_next = input_left_next = 0.0;
+    input_total = 0.0;
+
+    output_top = output_right = output_bottom = output_left = 0.0;
+    output_top_next = output_right_next = output_bottom_next = output_left_next = 0.0;
+    output_total = output_total_next = 0.0;
+
+    fluid_amount = 0.0;
+    velocity = 0.0;
+
+    typeOfNeighbourhood = 0;
+    typeOfNeighbourhoodOnSlant = 0;
+
+    x = y = 0;
+
+    source = boundary = outlet = false;
+}
+
+Cell::Cell(bool fluid, bool boundary, int x, int y)
+{
+    this->fluid = fluid;
+    this->boundary = boundary;
+    this->x = x;
+    this->y = y;
+
+    input_top = input_right = input_bottom = input_left = 0.0;
+    input_top_next = input_right_next = input_bottom_next = input_left_next = 0.0;
+    input_total = 0.0;
+
+    output_top = output_right = output_bottom = output_left = 0.0;
+    output_top_next = output_right_next = output_bottom_next = output_left_next = 0.0;
+    output_total = output_total_next = 0.0;
+
+    fluid_amount = 0.0;
+    velocity = 0.0;
+
+    typeOfNeighbourhood = 0;
+    typeOfNeighbourhoodOnSlant = 0;
+
+    source = outlet = outer_boundary = false;
+}
+
+bool Cell::GetFluid()
+{
+    return fluid;
+}
+
+bool Cell::GetBoundary()
+{
+    return boundary;
+}
+
+bool Cell::GetSource()
+{
+    return source;
+}
+
+bool Cell::GetBalance()
+{
+    if( abs(input_total - output_total) < 1e-5 )
+        return true;
+    return false;
+}
+
+bool Cell::GetOutlet()
+{
+    return outlet;
+}
+
+bool Cell::GetOuterBoundary()
+{
+    return outer_boundary;
+}
+
+double Cell::GetFluidAmount()
+{
+    return fluid_amount;
+}
+
+double Cell::GetVelocity()
+{
+    return velocity;
+}
+
+int Cell::GetX()
+{
+    return x;
+}
+
+int Cell::GetY()
+{
+    return y;
+}
+
+void Cell::SetSource()
+{
+    source = true;
+}
+
+void Cell::SetOutlet()
+{
+    outlet = true;
+}
+
+void Cell::SetNeighbours(Cell* top, Cell* right, Cell* bottom, Cell* left)
+{
+    this->neighbours.insert({ "Top", top });
+    this->neighbours.insert({ "Right", right });
+    this->neighbours.insert({ "Bottom", bottom });
+    this->neighbours.insert({ "Left", left });
+}
+
+void Cell::SetTypeOfNeighbourhood(int type)
+{
+    this->typeOfNeighbourhood = type;
+}
+
+void Cell::SetNeighboursOnSlant(Cell* topRight, Cell* bottomRight, Cell* bottomLeft, Cell* topLeft)
+{
+    this->neighboursOnSlant.insert({ "TopRight", topRight });
+    this->neighboursOnSlant.insert({ "BottomRight", bottomRight });
+    this->neighboursOnSlant.insert({ "BottomLeft", bottomLeft });
+    this->neighboursOnSlant.insert({ "TopLeft", topLeft });
+}
+
+void Cell::SetTypeOfNeighbourhoodOnSlant(int type)
+{
+    this->typeOfNeighbourhoodOnSlant = type;
+}
+
+void Cell::FluidFlow()
+{
+
+    //calculate direction of output
+    double x_direction = input_left - input_right;
+    double y_direction = input_bottom - input_top;
+
+    velocity = sqrt(x_direction * x_direction + y_direction * y_direction);
+
+    input_total = input_left + input_bottom + input_right + input_top;
+
+    if( abs(input_total) < 1e-5 )
+        return;
+
+    if (abs(x_direction) < 1e-5 && abs(y_direction) < 1e-5 )
+    {
+        UniformFlow();
+        return;
+    }
+
+    int direction = ChooseDirection(x_direction, y_direction);
+    double angle;
+    double angle_r;
+    if( abs(x_direction) > 1e-5 )
+        angle_r = atan(y_direction / x_direction);
+    else
+        angle_r = PI / 2;
+    angle = angle_r * 180 / PI;
+    double abs_angle = abs(angle);
+
+    double top_flow = 0.0;
+    double right_flow = 0.0;
+    double bottom_flow = 0.0;
+    double left_flow = 0.0;
+
+    double top_right_flow = 0.0;
+    double bottom_right_flow = 0.0;
+    double bottom_left_flow = 0.0;
+    double top_left_flow = 0.0;
+
+    double a = 0.0;
+
+    if (typeOfNeighbourhood == 0)
+    {
+        switch (typeOfNeighbourhoodOnSlant)
+        {
+            case 0:
+                a = abs_angle / 90;
+                if (angle > 0 && x_direction > 0 && y_direction > 0)
+                {
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        top_right_flow = input_total * a / 0.5;
+                        right_flow = input_total * (0.5-a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant( top_right_flow*abs(sin(angle_r)), top_right_flow*cos(angle_r), 0, 0, direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        top_flow = input_total * a / 0.5;
+                        top_right_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_right_flow * abs(sin(angle_r)), top_right_flow * cos(angle_r), 0, 0, direction);
+                    }
+                }
+                else if (angle < 0 && x_direction < 0 && y_direction > 0)
+                {
+                    a = (angle + 90) / 90;
+                    if (a < 0.5 || abs(a - 0.5) < 1e-5)
+                    {
+                        top_left_flow = input_total * a / 0.5;
+                        top_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_left_flow * abs(sin(angle_r)), 0, 0, top_left_flow * cos(angle_r), direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        left_flow = input_total * a / 0.5;
+                        top_left_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_left_flow * abs(sin(angle_r)), 0, 0, top_left_flow * cos(angle_r), direction);
+                    }
+                }
+                else if (angle > 0 && x_direction < 0 && y_direction < 0)
+                {
+                    if (a < 0.5 || abs(a - 0.5) < 1e-5)
+                    {
+                        bottom_left_flow = input_total * a / 0.5;
+                        left_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, 0, bottom_left_flow * abs(sin(angle_r)), bottom_left_flow * cos(angle_r), direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        bottom_flow = input_total * a / 0.5;
+                        bottom_left_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, 0, bottom_left_flow * abs(sin(angle_r)), bottom_left_flow * cos(angle_r), direction);
+                    }
+                }
+                else if (angle < 0 && x_direction > 0 && y_direction < 0)
+                {
+                    a = (angle + 90) / 90;
+                    if (a < 0.5 || abs(a - 0.5) < 1e-5)
+                    {
+                        bottom_right_flow = input_total * a / 0.5;
+                        bottom_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, bottom_right_flow * cos(angle_r), bottom_right_flow * abs(sin(angle_r)), 0, direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        right_flow = input_total * a / 0.5;
+                        bottom_right_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, bottom_right_flow * cos(angle_r), bottom_right_flow * abs(sin(angle_r)), 0, direction);
+                    }
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction > 0)
+                {
+                    top_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction < 0)
+                {
+                    bottom_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction > 0 && abs(y_direction) < 1e-5)
+                {
+                    right_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction < 0 && abs(y_direction) < 1e-5)
+                {
+                    left_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                break;
+
+            case 1:
+                a = abs_angle / 90;
+                if (angle > 0 && x_direction > 0 && y_direction > 0)
+                {
+                    top_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    right_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (angle < 0 && x_direction < 0 && y_direction > 0)
+                {
+                    a = (angle + 90) / 90;
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        top_left_flow = input_total * a / 0.5;
+                        top_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_left_flow * abs(sin(angle_r)), 0, 0, top_left_flow* cos(angle_r), direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        left_flow = input_total * a / 0.5;
+                        top_left_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_left_flow* abs(sin(angle_r)), 0, 0, top_left_flow* cos(angle_r), direction);
+                    }
+                }
+                else if (angle > 0 && x_direction < 0 && y_direction < 0)
+                {
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        bottom_left_flow = input_total * a / 0.5;
+                        left_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, 0, bottom_left_flow* abs(sin(angle_r)), bottom_left_flow* cos(angle_r), direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        bottom_flow = input_total * a / 0.5;
+                        bottom_left_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, 0, bottom_left_flow * abs(sin(angle_r)), bottom_left_flow * cos(angle_r), direction);
+                    }
+                }
+                else if (angle < 0 && x_direction > 0 && y_direction < 0)
+                {
+                    a = (angle + 90) / 90;
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        bottom_right_flow = input_total * a / 0.5;
+                        bottom_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, bottom_right_flow* cos(angle_r), bottom_right_flow* abs(sin(angle_r)), 0, direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        right_flow = input_total * a / 0.5;
+                        bottom_right_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, bottom_right_flow* cos(angle_r), bottom_right_flow* abs(sin(angle_r)), 0, direction);
+                    }
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction > 0)
+                {
+                    top_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction < 0)
+                {
+                    bottom_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction > 0 && abs(y_direction) < 1e-5)
+                {
+                    right_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction < 0 && abs(y_direction) < 1e-5)
+                {
+                    left_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                break;
+
+            case 2:
+                a = abs_angle / 90;
+                if (angle > 0 && x_direction > 0 && y_direction > 0)
+                {
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        top_right_flow = input_total * a / 0.5;
+                        right_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_right_flow * abs(sin(angle_r)), top_right_flow * cos(angle_r), 0, 0, direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        top_flow = input_total * a / 0.5;
+                        top_right_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_right_flow * abs(sin(angle_r)), top_right_flow * cos(angle_r), 0, 0, direction);
+                    }
+                }
+                else if (angle < 0 && x_direction < 0 && y_direction > 0)
+                {
+                    a = (angle + 90) / 90;
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        top_left_flow = input_total * a / 0.5;
+                        top_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_left_flow* abs(sin(angle_r)), 0, 0, top_left_flow* cos(angle_r), direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        left_flow = input_total * a / 0.5;
+                        top_left_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_left_flow* abs(sin(angle_r)), 0, 0, top_left_flow* cos(angle_r), direction);
+                    }
+                }
+                else if (angle > 0 && x_direction < 0 && y_direction < 0)
+                {
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        bottom_left_flow = input_total * a / 0.5;
+                        left_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, 0, bottom_left_flow* abs(sin(angle_r)), bottom_left_flow* cos(angle_r), direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        bottom_flow = input_total * a / 0.5;
+                        bottom_left_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, 0, bottom_left_flow* abs(sin(angle_r)), bottom_left_flow* cos(angle_r), direction);
+                    }
+                }
+                else if (angle < 0 && x_direction > 0 && y_direction < 0)
+                {
+                    bottom_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    right_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction > 0)
+                {
+                    top_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction < 0)
+                {
+                    bottom_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction > 0 && abs(y_direction) < 1e-5)
+                {
+                    right_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction < 0 && abs(y_direction) < 1e-5)
+                {
+                    left_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                break;
+
+
+            case 3:
+                a = abs_angle / 90;
+                if (angle > 0 && x_direction > 0 && y_direction > 0)
+                {
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        top_right_flow = input_total * a / 0.5;
+                        right_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_right_flow * abs(sin(angle_r)), top_right_flow * cos(angle_r), 0, 0, direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        top_flow = input_total * a / 0.5;
+                        top_right_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_right_flow * abs(sin(angle_r)), top_right_flow * cos(angle_r), 0, 0, direction);
+                    }
+                }
+                else if (angle < 0 && x_direction < 0 && y_direction > 0)
+                {
+                    a = (angle + 90) / 90;
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        top_left_flow = input_total * a / 0.5;
+                        top_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_left_flow* abs(sin(angle_r)), 0, 0, top_left_flow* cos(angle_r), direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        left_flow = input_total * a / 0.5;
+                        top_left_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_left_flow* abs(sin(angle_r)), 0, 0, top_left_flow* cos(angle_r), direction);
+                    }
+                }
+                else if (angle > 0 && x_direction < 0 && y_direction < 0)
+                {
+                    bottom_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    left_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (angle < 0 && x_direction > 0 && y_direction < 0)
+                {
+                    a = (angle + 90) / 90;
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        bottom_right_flow = input_total * a / 0.5;
+                        bottom_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, bottom_right_flow * cos(angle_r), bottom_right_flow * abs(sin(angle_r)), 0, direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        right_flow = input_total * a / 0.5;
+                        bottom_right_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, bottom_right_flow* cos(angle_r), bottom_right_flow* abs(sin(angle_r)), 0, direction);
+                    }
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction > 0)
+                {
+                    top_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction < 0)
+                {
+                    bottom_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction > 0 && abs(y_direction) < 1e-5)
+                {
+                    right_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction < 0 && abs(y_direction) < 1e-5)
+                {
+                    left_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                break;
+
+            case 4:
+                a = abs_angle / 90;
+                if (angle > 0 && x_direction > 0 && y_direction > 0)
+                {
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        top_right_flow = input_total * a / 0.5;
+                        right_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_right_flow * abs(sin(angle_r)), top_right_flow * cos(angle_r), 0, 0, direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        top_flow = input_total * a / 0.5;
+                        top_right_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_right_flow * abs(sin(angle_r)), top_right_flow * cos(angle_r), 0, 0, direction);
+                    }
+                }
+                else if (angle < 0 && x_direction < 0 && y_direction > 0)
+                {
+                    top_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    left_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (angle > 0 && x_direction < 0 && y_direction < 0)
+                {
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        bottom_left_flow = input_total * a / 0.5;
+                        left_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, 0, bottom_left_flow* abs(sin(angle_r)), bottom_left_flow* cos(angle_r), direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        bottom_flow = input_total * a / 0.5;
+                        bottom_left_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, 0, bottom_left_flow* abs(sin(angle_r)), bottom_left_flow* cos(angle_r), direction);
+                    }
+                }
+                else if (angle < 0 && x_direction > 0 && y_direction < 0)
+                {
+                    a = (angle + 90) / 90;
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        bottom_right_flow = input_total * a / 0.5;
+                        bottom_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, bottom_right_flow* cos(angle_r), bottom_right_flow* abs(sin(angle_r)), 0, direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        right_flow = input_total * a / 0.5;
+                        bottom_right_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, bottom_right_flow * cos(angle_r), bottom_right_flow * abs(sin(angle_r)), 0, direction);
+                    }
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction > 0)
+                {
+                    top_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction < 0)
+                {
+                    bottom_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction > 0 && abs(y_direction) < 1e-5)
+                {
+                    right_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction < 0 && abs(y_direction) < 1e-5)
+                {
+                    left_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                break;
+
+            case 5:
+                a = abs_angle / 90;
+                if (angle > 0 && x_direction > 0 && y_direction > 0)
+                {
+                    top_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    right_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (angle < 0 && x_direction < 0 && y_direction > 0)
+                {
+                    a = (angle + 90) / 90;
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        top_left_flow = input_total * a / 0.5;
+                        top_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_left_flow * abs(sin(angle_r)), 0, 0, top_left_flow * cos(angle_r), direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        left_flow = input_total * a / 0.5;
+                        top_left_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_left_flow* abs(sin(angle_r)), 0, 0, top_left_flow* cos(angle_r), direction);
+                    }
+                }
+                else if (angle > 0 && x_direction < 0 && y_direction < 0)
+                {
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        bottom_left_flow = input_total * a / 0.5;
+                        left_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, 0, bottom_left_flow* abs(sin(angle_r)), bottom_left_flow* cos(angle_r), direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        bottom_flow = input_total * a / 0.5;
+                        bottom_left_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, 0, bottom_left_flow * abs(sin(angle_r)), bottom_left_flow * cos(angle_r), direction);
+                    }
+                }
+                else if (angle < 0 && x_direction > 0 && y_direction < 0)
+                {
+                    bottom_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    right_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction > 0)
+                {
+                    top_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction < 0)
+                {
+                    bottom_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction > 0 && abs(y_direction) < 1e-5)
+                {
+                    right_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction < 0 && abs(y_direction) < 1e-5)
+                {
+                    left_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                break;
+
+            case 6:
+                a = abs_angle / 90;
+                if (angle > 0 && x_direction > 0 && y_direction > 0)
+                {
+                    top_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    right_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (angle < 0 && x_direction < 0 && y_direction > 0)
+                {
+                    a = (angle + 90) / 90;
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        top_left_flow = input_total * a / 0.5;
+                        top_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_left_flow * abs(sin(angle_r)), 0, 0, top_left_flow * cos(angle_r), direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        left_flow = input_total * a / 0.5;
+                        top_left_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_left_flow* abs(sin(angle_r)), 0, 0, top_left_flow* cos(angle_r), direction);
+                    }
+                }
+                else if (angle > 0 && x_direction < 0 && y_direction < 0)
+                {
+                    bottom_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    left_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (angle < 0 && x_direction > 0 && y_direction < 0)
+                {
+                    a = (angle + 90) / 90;
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        bottom_right_flow = input_total * a / 0.5;
+                        bottom_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, bottom_right_flow* cos(angle_r), bottom_right_flow* abs(sin(angle_r)), 0, direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        right_flow = input_total * a / 0.5;
+                        bottom_right_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, bottom_right_flow* cos(angle_r), bottom_right_flow* abs(sin(angle_r)), 0, direction);
+                    }
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction > 0)
+                {
+                    top_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction < 0)
+                {
+                    bottom_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction > 0 && abs(y_direction) < 1e-5)
+                {
+                    right_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction < 0 && abs(y_direction) < 1e-5)
+                {
+                    left_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                break;
+
+            case 7:
+                a = abs_angle / 90;
+                if (angle > 0 && x_direction > 0 && y_direction > 0)
+                {
+                    top_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    right_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (angle < 0 && x_direction < 0 && y_direction > 0)
+                {
+                    top_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    left_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (angle > 0 && x_direction < 0 && y_direction < 0)
+                {
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        bottom_left_flow = input_total * a / 0.5;
+                        left_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, 0, bottom_left_flow* abs(sin(angle_r)), bottom_left_flow* cos(angle_r), direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        bottom_flow = input_total * a / 0.5;
+                        bottom_left_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, 0, bottom_left_flow * abs(sin(angle_r)), bottom_left_flow * cos(angle_r), direction);
+                    }
+                }
+                else if (angle < 0 && x_direction > 0 && y_direction < 0)
+                {
+                    a = (angle + 90) / 90;
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        bottom_right_flow = input_total * a / 0.5;
+                        bottom_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, bottom_right_flow* cos(angle_r), bottom_right_flow* abs(sin(angle_r)), 0, direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        right_flow = input_total * a / 0.5;
+                        bottom_right_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, bottom_right_flow* cos(angle_r), bottom_right_flow* abs(sin(angle_r)), 0, direction);
+                    }
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction > 0)
+                {
+                    top_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction < 0)
+                {
+                    bottom_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction > 0 && abs(y_direction) < 1e-5)
+                {
+                    right_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction < 0 && abs(y_direction) < 1e-5)
+                {
+                    left_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                break;
+
+            case 8:
+                a = abs_angle / 90;
+                if (angle > 0 && x_direction > 0 && y_direction > 0)
+                {
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        top_right_flow = input_total * a / 0.5;
+                        right_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_right_flow * abs(sin(angle_r)), top_right_flow * cos(angle_r), 0, 0, direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        top_flow = input_total * a / 0.5;
+                        top_right_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_right_flow * abs(sin(angle_r)), top_right_flow * cos(angle_r), 0, 0, direction);
+                    }
+                }
+                else if (angle < 0 && x_direction < 0 && y_direction > 0)
+                {
+                    a = (angle + 90) / 90;
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        top_left_flow = input_total * a / 0.5;
+                        top_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_left_flow * abs(sin(angle_r)), 0, 0, top_left_flow * cos(angle_r), direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        left_flow = input_total * a / 0.5;
+                        top_left_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_left_flow * abs(sin(angle_r)), 0, 0, top_left_flow * cos(angle_r), direction);
+                    }
+                }
+                else if (angle > 0 && x_direction < 0 && y_direction < 0)
+                {
+                    bottom_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    left_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (angle < 0 && x_direction > 0 && y_direction < 0)
+                {
+                    bottom_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    right_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction > 0)
+                {
+                    top_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction < 0)
+                {
+                    bottom_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction > 0 && abs(y_direction) < 1e-5)
+                {
+                    right_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction < 0 && abs(y_direction) < 1e-5)
+                {
+                    left_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                break;
+
+            case 9:
+                a = abs_angle / 90;
+                if (angle > 0 && x_direction > 0 && y_direction > 0)
+                {
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        top_right_flow = input_total * a / 0.5;
+                        right_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_right_flow * abs(sin(angle_r)), top_right_flow * cos(angle_r), 0, 0, direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        top_flow = input_total * a / 0.5;
+                        top_right_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_right_flow * abs(sin(angle_r)), top_right_flow * cos(angle_r), 0, 0, direction);
+                    }
+                }
+                else if (angle < 0 && x_direction < 0 && y_direction > 0)
+                {
+                    top_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    left_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (angle > 0 && x_direction < 0 && y_direction < 0)
+                {
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        bottom_left_flow = input_total * a / 0.5;
+                        left_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, 0, bottom_left_flow* abs(sin(angle_r)), bottom_left_flow* cos(angle_r), direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        bottom_flow = input_total * a / 0.5;
+                        bottom_left_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, 0, bottom_left_flow* abs(sin(angle_r)), bottom_left_flow* cos(angle_r), direction);
+                    }
+                }
+                else if (angle < 0 && x_direction > 0 && y_direction < 0)
+                {
+                    bottom_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    right_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction > 0)
+                {
+                    top_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction < 0)
+                {
+                    bottom_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction > 0 && abs(y_direction) < 1e-5)
+                {
+                    right_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction < 0 && abs(y_direction) < 1e-5)
+                {
+                    left_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                break;
+
+            case 10:
+                a = abs_angle / 90;
+                if (angle > 0 && x_direction > 0 && y_direction > 0)
+                {
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        top_right_flow = input_total * a / 0.5;
+                        right_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_right_flow * abs(sin(angle_r)), top_right_flow * cos(angle_r), 0, 0, direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        top_flow = input_total * a / 0.5;
+                        top_right_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_right_flow * abs(sin(angle_r)), top_right_flow * cos(angle_r), 0, 0, direction);
+                    }
+                }
+                else if (angle < 0 && x_direction < 0 && y_direction > 0)
+                {
+                    top_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    left_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (angle > 0 && x_direction < 0 && y_direction < 0)
+                {
+                    bottom_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    left_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (angle < 0 && x_direction > 0 && y_direction < 0)
+                {
+                    a = (angle + 90) / 90;
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        bottom_right_flow = input_total * a / 0.5;
+                        bottom_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, bottom_right_flow* cos(angle_r), bottom_right_flow* abs(sin(angle_r)), 0, direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        right_flow = input_total * a / 0.5;
+                        bottom_right_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, bottom_right_flow * cos(angle_r), bottom_right_flow * abs(sin(angle_r)), 0, direction);
+                    }
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction > 0)
+                {
+                    top_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction < 0)
+                {
+                    bottom_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction > 0 && abs(y_direction) < 1e-5)
+                {
+                    right_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction < 0 && abs(y_direction) < 1e-5)
+                {
+                    left_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                break;
+
+            case 11:
+                a = abs_angle / 90;
+                if (angle > 0 && x_direction > 0 && y_direction > 0)
+                {
+                    top_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    right_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (angle < 0 && x_direction < 0 && y_direction > 0)
+                {
+                    a = (angle + 90) / 90;
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        top_left_flow = input_total * a / 0.5;
+                        top_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_left_flow * abs(sin(angle_r)), 0, 0, top_left_flow * cos(angle_r), direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        left_flow = input_total * a / 0.5;
+                        top_left_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_left_flow* abs(sin(angle_r)), 0, 0, top_left_flow* cos(angle_r), direction);
+                    }
+                }
+                else if (angle > 0 && x_direction < 0 && y_direction < 0)
+                {
+                    bottom_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    left_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (angle < 0 && x_direction > 0 && y_direction < 0)
+                {
+                    bottom_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    right_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction > 0)
+                {
+                    top_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction < 0)
+                {
+                    bottom_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction > 0 && abs(y_direction) < 1e-5)
+                {
+                    right_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction < 0 && abs(y_direction) < 1e-5)
+                {
+                    left_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                break;
+
+            case 12:
+                a = abs_angle / 90;
+                if (angle > 0 && x_direction > 0 && y_direction > 0)
+                {
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        top_right_flow = input_total * a / 0.5;
+                        right_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_right_flow * abs(sin(angle_r)), top_right_flow * cos(angle_r), 0, 0, direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        top_flow = input_total * a / 0.5;
+                        top_right_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(top_right_flow * abs(sin(angle_r)), top_right_flow * cos(angle_r), 0, 0, direction);
+                    }
+                }
+                else if (angle < 0 && x_direction < 0 && y_direction > 0)
+                {
+                    top_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    left_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (angle > 0 && x_direction < 0 && y_direction < 0)
+                {
+                    bottom_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    left_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (angle < 0 && x_direction > 0 && y_direction < 0)
+                {
+                    bottom_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    right_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction > 0)
+                {
+                    top_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction < 0)
+                {
+                    bottom_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction > 0 && abs(y_direction) < 1e-5)
+                {
+                    right_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction < 0 && abs(y_direction) < 1e-5)
+                {
+                    left_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                break;
+
+            case 13:
+                a = abs_angle / 90;
+                if (angle > 0 && x_direction > 0 && y_direction > 0)
+                {
+                    top_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    right_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (angle < 0 && x_direction < 0 && y_direction > 0)
+                {
+                    top_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    left_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (angle > 0 && x_direction < 0 && y_direction < 0)
+                {
+                    bottom_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    left_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (angle < 0 && x_direction > 0 && y_direction < 0)
+                {
+                    a = (angle + 90) / 90;
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        bottom_right_flow = input_total * a / 0.5;
+                        bottom_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, bottom_right_flow * cos(angle_r), bottom_right_flow * abs(sin(angle_r)), 0, direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        right_flow = input_total * a / 0.5;
+                        bottom_right_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, bottom_right_flow* cos(angle_r), bottom_right_flow* abs(sin(angle_r)), 0, direction);
+                    }
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction > 0)
+                {
+                    top_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction < 0)
+                {
+                    bottom_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction > 0 && abs(y_direction) < 1e-5)
+                {
+                    right_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction < 0 && abs(y_direction) < 1e-5)
+                {
+                    left_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                break;
+
+            case 14:
+                a = abs_angle / 90;
+                if (angle > 0 && x_direction > 0 && y_direction > 0)
+                {
+                    top_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    right_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (angle < 0 && x_direction < 0 && y_direction > 0)
+                {
+                    top_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    left_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (angle > 0 && x_direction < 0 && y_direction < 0)
+                {
+                    if (a < 0.5 || abs(a-0.5) < 1e-5)
+                    {
+                        bottom_left_flow = input_total * a / 0.5;
+                        left_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, 0, bottom_left_flow* abs(sin(angle_r)), bottom_left_flow* cos(angle_r), direction);
+                    }
+                    else
+                    {
+                        a -= 0.5;
+                        bottom_flow = input_total * a / 0.5;
+                        bottom_left_flow = input_total * (0.5 - a) / 0.5;
+                        FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                        FlowToNeighboursOnSlant(0, 0, bottom_left_flow* abs(sin(angle_r)), bottom_left_flow* cos(angle_r), direction);
+                    }
+                }
+                else if (angle < 0 && x_direction > 0 && y_direction < 0)
+                {
+                    bottom_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    right_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction > 0)
+                {
+                    top_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction < 0)
+                {
+                    bottom_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction > 0 && abs(y_direction) < 1e-5)
+                {
+                    right_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction < 0 && abs(y_direction) < 1e-5)
+                {
+                    left_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                break;
+
+            case 15:
+                a = abs_angle / 90;
+                if (angle > 0 && x_direction > 0 && y_direction > 0)
+                {
+                    top_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    right_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (angle < 0 && x_direction < 0 && y_direction > 0)
+                {
+                    top_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    left_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (angle > 0 && x_direction < 0 && y_direction < 0)
+                {
+                    bottom_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    left_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (angle < 0 && x_direction > 0 && y_direction < 0)
+                {
+                    bottom_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                    right_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction > 0)
+                {
+                    top_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (abs(x_direction) < 1e-5 && y_direction < 0)
+                {
+                    bottom_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction > 0 && abs(y_direction) < 1e-5)
+                {
+                    right_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                else if (x_direction < 0 && abs(y_direction) < 1e-5)
+                {
+                    left_flow = input_total;
+                    FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                }
+                break;
+        }
+    }
+
+    switch (typeOfNeighbourhood)
+    {
+        case 1:
+            if( x_direction >= 0 )
+                right_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction) );
+            else
+                left_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+            if (y_direction > 0)
+            {
+                bottom_flow = 0.5 * input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                if( abs(x_direction) < 1e-5)
+                {
+                    right_flow += bottom_flow / 2;
+                    left_flow += bottom_flow / 2;
+                }
+                else if( x_direction > 0 )
+                    right_flow += bottom_flow;
+                else
+                    left_flow += bottom_flow;
+            }
+            else
+                bottom_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 2:
+            if (y_direction >= 0)
+                top_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+            else
+                bottom_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+            if (x_direction > 0)
+            {
+                left_flow = 0.5 * input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                if( abs(y_direction) < 1e-5 )
+                {
+                    top_flow += left_flow / 2;
+                    bottom_flow += left_flow / 2;
+                }
+                else if( y_direction > 0 )
+                    top_flow += left_flow;
+                else
+                    bottom_flow += left_flow;
+            }
+            else
+                left_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 3:
+            if (x_direction >= 0)
+                right_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+            else
+                left_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+            if (y_direction < 0)
+            {
+                top_flow = 0.5 * input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+                if( abs(x_direction) < 1e-5 )
+                {
+                    right_flow += top_flow / 2;
+                    left_flow += top_flow / 2;
+                }
+                else if (x_direction > 0)
+                    right_flow += top_flow;
+                else
+                    left_flow += top_flow;
+            }
+            else
+                top_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 4:
+            if (y_direction >= 0)
+                top_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+            else
+                bottom_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+            if (x_direction < 0)
+            {
+                right_flow = 0.5 * input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+                if( abs(y_direction) < 1e-5 )
+                {
+                    top_flow += right_flow / 2;
+                    bottom_flow += right_flow / 2;
+                }
+                else if (y_direction > 0)
+                    top_flow += right_flow;
+                else
+                    bottom_flow += right_flow;
+            }
+            else
+                right_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 5:
+            left_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+            bottom_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 6:
+            if (x_direction >= 0)
+                right_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+            else
+                left_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 7:
+            right_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+            bottom_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 8:
+            left_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+            top_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 9:
+            if (y_direction >= 0)
+                top_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+            else
+                bottom_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 10:
+            right_flow = input_total * abs(y_direction) / (abs(x_direction) + abs(y_direction));
+            top_flow = input_total * abs(x_direction) / (abs(x_direction) + abs(y_direction));
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 11:
+            left_flow = input_total;
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 12:
+            top_flow = input_total;
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 13:
+            right_flow = input_total;
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 14:
+            bottom_flow = input_total;
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+    }
+
+}
+
+void Cell::UniformFlow()	//if vectors reduce itself, this function is performed
+{
+    double top_flow = 0.0;
+    double right_flow = 0.0;
+    double bottom_flow = 0.0;
+    double left_flow = 0.0;
+
+    double top_right_flow = 0.0;
+    double bottom_right_flow = 0.0;
+    double bottom_left_flow = 0.0;
+    double top_left_flow = 0.0;
+
+    switch (typeOfNeighbourhood)
+    {
+        case 0:	//(t && r && b && l)
+            if (typeOfNeighbourhoodOnSlant == 0)
+            {
+                top_flow = input_total / 8;
+                right_flow = input_total / 8;
+                bottom_flow = input_total / 8;
+                left_flow = input_total / 8;
+
+                top_right_flow = input_total / 8;
+                bottom_right_flow = input_total / 8;
+                bottom_left_flow = input_total / 8;
+                top_left_flow = input_total / 8;
+
+                FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+                FlowToNeighboursOnSlant(top_right_flow/2, top_right_flow/2, 0, 0, 2);
+                FlowToNeighboursOnSlant(0, bottom_right_flow / 2, bottom_right_flow / 2, 0, 4);
+                FlowToNeighboursOnSlant(0, 0, bottom_left_flow / 2, bottom_left_flow / 2, 6);
+                FlowToNeighboursOnSlant(top_left_flow / 2, 0, 0, top_left_flow / 2, 8);
+            }
+            else
+            {
+                top_flow = 0.25 * input_total;
+                right_flow = 0.25 * input_total;
+                bottom_flow = 0.25 * input_total;
+                left_flow = 0.25 * input_total;
+                FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            }
+            break;
+
+        case 1: //(!t && r && b && l)
+            top_flow = 0.0;
+            right_flow = input_total / 3;
+            bottom_flow = input_total / 3;
+            left_flow = input_total / 3;
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 2: //(t && !r && b && l)
+            top_flow = input_total / 3;
+            right_flow = 0.0;
+            bottom_flow = input_total / 3;
+            left_flow = input_total / 3;
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 3: //(t && r && !b && l)
+            top_flow = input_total / 3;
+            right_flow = input_total / 3;
+            bottom_flow = 0.0;
+            left_flow = input_total / 3;
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 4: //(t && r && b && !l)
+            top_flow = input_total / 3;
+            right_flow = input_total / 3;
+            bottom_flow = input_total / 3;
+            left_flow = 0.0;
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 5: //(!t && !r && b && l)
+            top_flow = 0.0;
+            right_flow = 0.0;
+            bottom_flow = input_total / 2;
+            left_flow = input_total / 2;
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 6: //(!t && r && !b && l)
+            top_flow = 0.0;
+            right_flow = input_total / 2;
+            bottom_flow = 0.0;
+            left_flow = input_total / 2;
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 7: //(!t && r && b && !l)
+            top_flow = 0.0;
+            right_flow = input_total / 2;
+            bottom_flow = input_total / 2;
+            left_flow = 0.0;
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 8: //(t && !r && !b && l)
+            top_flow = input_total / 2;
+            right_flow = 0.0;
+            bottom_flow = 0.0;
+            left_flow = input_total / 2;
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 9: //(t && !r && b && !l)
+            top_flow = input_total / 2;
+            right_flow = 0.0;
+            bottom_flow = input_total / 2;
+            left_flow = 0.0;
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 10: //(t && r && !b && !l)
+            top_flow = input_total / 2;
+            right_flow = input_total / 2;
+            bottom_flow = 0.0;
+            left_flow = 0.0;
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 11: //(!t && !r && !b && l)
+            top_flow = 0.0;
+            right_flow = 0.0;
+            bottom_flow = 0.0;
+            left_flow = input_total;
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 12: //(t && !r && !b && !l)
+            top_flow = input_total;
+            right_flow = 0.0;
+            bottom_flow = 0.0;
+            left_flow = 0.0;
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 13: //(!t && r && !b && !l)
+            top_flow = 0.0;
+            right_flow = input_total;
+            bottom_flow = 0.0;
+            left_flow = 0.0;
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+
+        case 14: //(!t && !r && b && !l)
+            top_flow = 0.0;
+            right_flow = 0.0;
+            bottom_flow = input_total;
+            left_flow = 0.0;
+            FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
+            break;
+    }
+
+}
+
+void Cell::FlowToNeighbours(double top_flow, double right_flow, double bottom_flow, double left_flow)
+{
+    neighbours["Right"]->SetLeftInput(right_flow);
+    neighbours["Bottom"]->SetTopInput(bottom_flow);
+    neighbours["Left"]->SetRightInput(left_flow);
+    neighbours["Top"]->SetBottomInput(top_flow);
+    output_right_next = right_flow;
+    output_bottom_next = bottom_flow;
+    output_left_next = left_flow;
+    output_top_next = top_flow;
+    output_total_next += output_bottom_next + output_left_next + output_right_next + output_top_next;
+}
+
+void Cell::FlowToNeighboursOnSlant(double top_flow, double right_flow, double bottom_flow, double left_flow, int direction)
+{
+    switch (direction)
+    {
+        case 2:
+            this->neighboursOnSlant["TopRight"]->SetLeftInput(right_flow);
+            this->neighboursOnSlant["TopRight"]->SetBottomInput(top_flow);
+            break;
+
+        case 4:
+            this->neighboursOnSlant["BottomRight"]->SetLeftInput(right_flow);
+            this->neighboursOnSlant["BottomRight"]->SetTopInput(bottom_flow);
+            break;
+
+        case 6:
+            this->neighboursOnSlant["BottomLeft"]->SetRightInput(left_flow);
+            this->neighboursOnSlant["BottomLeft"]->SetTopInput(bottom_flow);
+            break;
+
+        case 8:
+            this->neighboursOnSlant["TopLeft"]->SetRightInput(left_flow);
+            this->neighboursOnSlant["TopLeft"]->SetBottomInput(top_flow);
+            break;
+    }
+    output_right_next = right_flow;
+    output_bottom_next = bottom_flow;
+    output_left_next = left_flow;
+    output_top_next = top_flow;
+    output_total_next += output_bottom_next + output_left_next + output_right_next + output_top_next;
+}
+
+void Cell::SetTopInput(double input)
+{
+    this->input_top_next += input;
+}
+
+void Cell::SetRightInput(double input)
+{
+    this->input_right_next += input;
+}
+
+void Cell::SetBottomInput(double input)
+{
+    this->input_bottom_next += input;
+}
+
+void Cell::SetLeftInput(double input)
+{
+    this->input_left_next += input;
+}
+
+void Cell::Update()
+{
+    input_top = input_top_next;
+    input_right = input_right_next;
+    input_bottom = input_bottom_next;
+    input_left = input_left_next;
+
+    input_total = input_top + input_right + input_bottom + input_left;
+    fluid_amount = input_total;
+
+    /*if (fluid_amount < 0)
+    {
+        cout << x << " " << y << endl;
+    }*/
+
+    output_top = output_top_next;
+    output_right = output_right_next;
+    output_bottom = output_bottom_next;
+    output_left = output_left_next;
+
+    output_total = output_total_next;
+
+    input_top_next = input_right_next = input_bottom_next = input_left_next = 0.0;
+    output_top_next = output_right_next = output_bottom_next = output_left_next = 0.0;
+    output_total_next = 0.0;
+}
+
+int Cell::ChooseDirection(double x_direction, double y_direction)
+{
+    if( abs(x_direction) < 1e-5 && y_direction > 0 )	//top
+        return 1;
+    if (x_direction > 0 && y_direction > 0)		//top right
+        return 2;
+    if (x_direction > 0 && abs(y_direction) < 1e-5)	//right
+        return 3;
+    if (x_direction > 0 && y_direction < 0)		//bottom right
+        return 4;
+    if (abs(x_direction) < 1e-5 && y_direction < 0)	//bottom
+        return 5;
+    if (x_direction < 0 && y_direction < 0)		//bottom left
+        return 6;
+    if (x_direction < 0 && abs(y_direction) < 1e-5)	//left
+        return 7;
+    if (x_direction < 0 && y_direction > 0)		//top left
+        return 8;
+
+    return 0;
+}
+
+void Cell::StandarizeCell(double factor)
+{
+    input_bottom_next *= factor;
+    input_left_next *= factor;
+    input_right_next *= factor;
+    input_top_next *= factor;
+    fluid_amount *= factor;
+    velocity *= factor;
+}
+
+void Cell::GetMeanFromNeighbours(double sigma)
+{
+    double sum = 0.0;
+    double mean = 0.0;
+    double temp = 0.0;
+    int nNeighbours = 0;
+
+    if (neighbours["Top"]->GetFluid() && !neighbours["Top"]->GetOuterBoundary())
+    {
+        temp = neighbours["Top"]->GetVelocity();
+        if( temp < sigma )
+        {
+            sum += temp;
+            nNeighbours++;
+        }
+    }
+    if (neighbours["Right"]->GetFluid() && !neighbours["Right"]->GetOuterBoundary())
+    {
+        temp = neighbours["Right"]->GetVelocity();
+        if (temp < sigma)
+        {
+            sum += temp;
+            nNeighbours++;
+        }
+    }
+    if (neighbours["Bottom"]->GetFluid() && !neighbours["Bottom"]->GetOuterBoundary())
+    {
+        temp = neighbours["Bottom"]->GetVelocity();
+        if (temp < sigma)
+        {
+            sum += temp;
+            nNeighbours++;
+        }
+    }
+    if (neighbours["Left"]->GetFluid() && !neighbours["Left"]->GetOuterBoundary())
+    {
+        temp = neighbours["Left"]->GetVelocity();
+        if (temp < sigma)
+        {
+            sum += temp;
+            nNeighbours++;
+        }
+    }
+    if (neighboursOnSlant["TopRight"]->GetFluid() && !neighboursOnSlant["TopRight"]->GetOuterBoundary())
+    {
+        temp = neighboursOnSlant["TopRight"]->GetVelocity();
+        if (temp < sigma)
+        {
+            sum += temp;
+            nNeighbours++;
+        }
+    }
+    if (neighboursOnSlant["BottomRight"]->GetFluid() && !neighboursOnSlant["BottomRight"]->GetOuterBoundary())
+    {
+        temp = neighboursOnSlant["BottomRight"]->GetVelocity();
+        if (temp < sigma)
+        {
+            sum += temp;
+            nNeighbours++;
+        }
+    }
+    if (neighboursOnSlant["BottomLeft"]->GetFluid() && !neighboursOnSlant["BottomLeft"]->GetOuterBoundary())
+    {
+        temp = neighboursOnSlant["BottomLeft"]->GetVelocity();
+        if (temp < sigma)
+        {
+            sum += temp;
+            nNeighbours++;
+        }
+    }
+    if (neighboursOnSlant["TopLeft"]->GetFluid() && !neighboursOnSlant["TopLeft"]->GetOuterBoundary())
+    {
+        temp = neighboursOnSlant["TopLeft"]->GetVelocity();
+        if (temp < sigma)
+        {
+            sum += temp;
+            nNeighbours++;
+        }
+    }
+
+    mean = sum / nNeighbours;
+
+    velocity = mean;
+}
