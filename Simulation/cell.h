@@ -5,6 +5,8 @@
 #include <map>
 #include <limits>
 #include <cmath>
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
 
 #define PI 3.14159265
 

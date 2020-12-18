@@ -3,13 +3,15 @@
 
 #include "binarymap.h"
 #include "solver.h"
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
 
 class UserInterface
 {
 public:
     UserInterface();
 
-    void SetBinaryMap(QString path);
+    void SetBinaryMap(QString qPath, const string mPath);
     QBitmap GetImage();
     bool BinaryMapIsEmpty();
 

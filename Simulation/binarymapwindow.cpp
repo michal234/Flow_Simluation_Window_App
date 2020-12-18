@@ -18,6 +18,8 @@ BinaryMapWindow::~BinaryMapWindow()
 void BinaryMapWindow::on_pushButton_clicked()
 {
     QString qPath = ui->textEdit->toPlainText();
+    const string mPath = qPath.toUtf8().constData();
+
     QBitmap map(qPath);
     if( map.isNull() )
     {
@@ -27,7 +29,7 @@ void BinaryMapWindow::on_pushButton_clicked()
     else
     {
         ui->label_info->setText("Binary map was insert correctly");
-        mw->userInterface.SetBinaryMap(qPath);
+        mw->userInterface.SetBinaryMap(qPath, mPath);
         int w = ui->label_pic->width();
         int h = ui->label_pic->height();
         ui->label_pic->setPixmap(map.scaled(w, h, Qt::KeepAspectRatio));

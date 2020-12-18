@@ -3,12 +3,17 @@
 
 #include <QString>
 #include <QBitmap>
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
+
+using namespace std;
+using namespace cv;
 
 class BinaryMap
 {
 public:
     BinaryMap();
-    BinaryMap(QString path);
+    BinaryMap(QString qPath, const string mPath);
     bool IsEmpty();
     int GetRows();
     int GetCols();
@@ -16,7 +21,10 @@ public:
     QBitmap GetImage();
 
 private:
-    QBitmap input;
+    QBitmap qImage;
+    Mat mImage;
+
+    Mat ConvertToOneChannel(Mat src);
 };
 
 #endif // BINARYMAP_H

@@ -7,6 +7,8 @@
 #include <limits>
 #include "binarymap.h"
 #include "cell.h"
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
 
 #define PI 3.14159265
 

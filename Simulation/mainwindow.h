@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 #include "userinterface.h"
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }

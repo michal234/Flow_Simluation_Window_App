@@ -8,9 +8,9 @@ UserInterface::UserInterface()
 
 }
 
-void UserInterface::SetBinaryMap(QString path)
+void UserInterface::SetBinaryMap(QString qPath, const string mPath)
 {
-    this->bm = BinaryMap(path);
+    this->bm = BinaryMap(qPath, mPath);
 }
 
 QBitmap UserInterface::GetImage()
