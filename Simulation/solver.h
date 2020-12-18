@@ -17,6 +17,7 @@ class Solver
     private:
         bool initialized;
         bool boundaryConditions;
+        bool calculated;
 
         int cellGridRows;
         int cellGridCols;
@@ -28,6 +29,7 @@ class Solver
         double fluid_input;
 
         int maxIter;
+        int start_direction;
 
         void SetNeighbours();
         int TypeOfNeighbourhood(Cell top, Cell right, Cell bottom, Cell left);
@@ -43,6 +45,7 @@ class Solver
 
         bool GetInitialized();
         bool GetBoudaryConditions();
+        bool GetCalculated();
 
         void CellGridInitialization(BinaryMap bm);
         void SetBoundaryConditions(double v, int direction);

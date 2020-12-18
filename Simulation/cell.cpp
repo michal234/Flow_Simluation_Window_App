@@ -168,7 +168,7 @@ void Cell::FluidFlow()
 
     input_total = input_left + input_bottom + input_right + input_top;
 
-    if( abs(input_total) < 1e-5 )
+    if( abs(input_total) < 1e-5 || input_total > MAX_VALUE)
         return;
 
     if (abs(x_direction) < 1e-5 && abs(y_direction) < 1e-5 )

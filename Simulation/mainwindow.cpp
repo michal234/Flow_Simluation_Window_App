@@ -34,7 +34,7 @@ void MainWindow::on_actionSimulate_triggered()
 
 void MainWindow::on_actionResults_triggered()
 {
-    ResultsWindow resultsWindow;
+    ResultsWindow resultsWindow(nullptr, this);
     resultsWindow.setModal(true);
     resultsWindow.exec();
 }

@@ -3,6 +3,7 @@
 
 #include "binarymap.h"
 #include "solver.h"
+#include "results.h"
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 
@@ -19,10 +20,17 @@ public:
     void SetBoundaryConditions(double v, int direction);
     void SetMaxIter(int iter);
     void StartSimulation();
+    bool SimulationIsCalculated();
+
+    QImage ShowResults();
+    QImage ShowScale();
+    double GetMinValue(int variable);
+    double GetMaxValue(int variable);
 
 private:
     BinaryMap bm;
     Solver solver;
+    Results results;
 };
 
 #endif // USERINTERFACE_H

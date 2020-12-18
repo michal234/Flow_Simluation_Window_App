@@ -6,11 +6,13 @@ Solver::Solver()
 {
     initialized = false;
     boundaryConditions = false;
+    calculated = false;
     cellGridCols = 0;
     cellGridRows = 0;
     v_start = 0.0;
     fluid_input = 0.0;
     maxIter = 100;
+    start_direction = 0;
 }
 
 bool Solver::GetInitialized()
@@ -21,6 +23,11 @@ bool Solver::GetInitialized()
 bool Solver::GetBoudaryConditions()
 {
     return boundaryConditions;
+}
+
+bool Solver::GetCalculated()
+{
+    return calculated;
 }
 
 void Solver::CellGridInitialization(BinaryMap bm)
@@ -110,6 +117,7 @@ void Solver::SetBoundaryConditions(double v, int direction)
 
     boundaryConditions = true;
     v_start = v;
+    start_direction = direction;
 }
 
 void Solver::SetMaxIter(int iter)
@@ -127,28 +135,26 @@ vector<Cell> Solver::Simulate()
 
     do
     {
-        //UpdateGrid();
         unbalancedCells = 0;
         for (int i = 0; i < FluidCells.size(); i++)
         {
             FluidCells[i]->FluidFlow();
             if( !FluidCells[i]->GetBalance() )
-            {
-                //FluidCells[i]->FluidFlow();
                 unbalancedCells++;
-            }
         }
         //Standarization();
         UpdateGrid();
-        ShowStep();
+        //ShowStep();
         x++;
-
     }while(x < this->maxIter && unbalancedCells != 0);
 
     //Standarization();
     //UpdateGrid();
     RemoveExtremalPoints();
-    ShowStep();
+    //ShowStep();
+
+    calculated = true;
+
     return CellGrid;
 }
 
@@ -429,7 +435,23 @@ void Solver::UpdateGrid()
     {
         FluidCells[i]->Update();
         if (FluidCells[i]->GetSource())
-            FluidCells[i]->SetLeftInput(v_start);
+        {
+            switch(start_direction)
+            {
+            case 1:
+                FluidCells[i]->SetLeftInput(this->v_start);
+                break;
+            case 2:
+                FluidCells[i]->SetRightInput(this->v_start);
+                break;
+            case 3:
+                FluidCells[i]->SetTopInput(this->v_start);
+                break;
+            case 4:
+                FluidCells[i]->SetBottomInput(this->v_start);
+                break;
+            }
+        }
     }
 
     //cout << "Aktualizacja siatki zakonczona\n";

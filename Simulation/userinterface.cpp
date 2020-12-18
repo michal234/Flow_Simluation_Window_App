@@ -42,5 +42,40 @@ void UserInterface::SetMaxIter(int iter)
 
 void UserInterface::StartSimulation()
 {
-    this->solver.Simulate();
+    this->results = Results(this->solver.Simulate(), this->bm.GetRows(), this->bm.GetCols());
+}
+
+bool UserInterface::SimulationIsCalculated()
+{
+    return this->solver.GetCalculated();
+}
+
+QImage UserInterface::ShowResults()
+{
+    return this->results.ShowVelocityContour();
+}
+
+QImage UserInterface::ShowScale()
+{
+    return this->results.ShowScale();
+}
+
+double UserInterface::GetMinValue(int variable)
+{
+    switch(variable)
+    {
+    case 1:
+        return this->results.GetMinVelocityValue();
+
+    }
+}
+
+double UserInterface::GetMaxValue(int variable)
+{
+    switch(variable)
+    {
+    case 1:
+        return this->results.GetMaxVelocityValue();
+
+    }
 }

@@ -9,6 +9,7 @@
 #include "opencv2/highgui/highgui.hpp"
 
 #define PI 3.14159265
+#define MAX_VALUE 50
 
 using namespace std;
 
