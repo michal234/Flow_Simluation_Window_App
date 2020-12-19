@@ -10,6 +10,7 @@
 
 #define PI 3.14159265
 #define MAX_VALUE 50
+#define DENSITY 1000
 
 using namespace std;
 
@@ -32,6 +33,7 @@ class Cell
 
         double fluid_amount;	//amount of fluid in the cell (= total_input)
         double velocity;
+        double startVelocity;
 
         //amount of fluid that flows into the cell in current step
         double input_top;
@@ -83,6 +85,7 @@ class Cell
 
         double GetFluidAmount();
         double GetVelocity();
+        double GetPressure();
 
         int GetX();
         int GetY();
@@ -103,6 +106,8 @@ class Cell
         void SetRightInput(double input);
         void SetBottomInput(double input);
         void SetLeftInput(double input);
+
+        void SetStartVelocity(double v);
 
         void Update();
         void StandarizeCell(double factor);

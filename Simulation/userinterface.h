@@ -22,7 +22,7 @@ public:
     void StartSimulation();
     bool SimulationIsCalculated();
 
-    QImage ShowResults();
+    QImage ShowResults(int variable);
     QImage ShowScale();
     double GetMinValue(int variable);
     double GetMaxValue(int variable);

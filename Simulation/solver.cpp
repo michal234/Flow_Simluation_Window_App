@@ -74,6 +74,7 @@ void Solver::SetBoundaryConditions(double v, int direction)
     {
         if (FluidCells[i]->GetFluid())
         {
+            FluidCells[i]->SetStartVelocity(v);
             switch(direction)
             {
             case 1:
@@ -131,7 +132,7 @@ vector<Cell> Solver::Simulate()
     UpdateGrid();
 
     int unbalancedCells = 0;
-    int x = 0;
+    int x = 1;
 
     do
     {
@@ -142,15 +143,19 @@ vector<Cell> Solver::Simulate()
             if( !FluidCells[i]->GetBalance() )
                 unbalancedCells++;
         }
-        //Standarization();
+
+        //if( x%10 == 0 )
+            //RemoveExtremalPoints();
+
         UpdateGrid();
         //ShowStep();
         x++;
-    }while(x < this->maxIter && unbalancedCells != 0);
+    }while(x <= this->maxIter && unbalancedCells != 0);
 
-    //Standarization();
+    //RemoveExtremalPoints();
+    Standarization();
     //UpdateGrid();
-    RemoveExtremalPoints();
+    //RemoveExtremalPoints();
     //ShowStep();
 
     calculated = true;
@@ -429,8 +434,6 @@ int Solver::TypeOfNeighbourhood(Cell top, Cell right, Cell bottom, Cell left)	//
 
 void Solver::UpdateGrid()
 {
-    //cout << "Trwa aktualizacja siatki...\n";
-
     for (int i = 0; i < FluidCells.size(); i++)
     {
         FluidCells[i]->Update();
@@ -453,8 +456,6 @@ void Solver::UpdateGrid()
             }
         }
     }
-
-    //cout << "Aktualizacja siatki zakonczona\n";
 }
 
 void Solver::ShowStep()
@@ -530,7 +531,8 @@ void Solver::RemoveExtremalPoints()
             if (FluidCells[i]->GetVelocity() > mean + 2 * sigma)
             {
                 nExtremal++;
-                FluidCells[i]->GetMeanFromNeighbours(mean + 2*sigma);
+                //FluidCells[i]->GetMeanFromNeighbours(mean + 2*sigma);
+                FluidCells[i]->StandarizeCell( mean / FluidCells[i]->GetVelocity() );
             }
         }
     }

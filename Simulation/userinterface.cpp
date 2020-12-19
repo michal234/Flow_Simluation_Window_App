@@ -50,9 +50,17 @@ bool UserInterface::SimulationIsCalculated()
     return this->solver.GetCalculated();
 }
 
-QImage UserInterface::ShowResults()
+QImage UserInterface::ShowResults(int variable)
 {
-    return this->results.ShowVelocityContour();
+    switch(variable)
+    {
+    case 1:
+        return this->results.ShowVelocityContour();
+
+    case 2:
+        return this->results.ShowPressureContour();
+    }
+
 }
 
 QImage UserInterface::ShowScale()
@@ -67,6 +75,8 @@ double UserInterface::GetMinValue(int variable)
     case 1:
         return this->results.GetMinVelocityValue();
 
+    case 2:
+        return this->results.GetMinPressureValue();
     }
 }
 
@@ -77,5 +87,7 @@ double UserInterface::GetMaxValue(int variable)
     case 1:
         return this->results.GetMaxVelocityValue();
 
+    case 2:
+        return this->results.GetMaxPressureValue();
     }
 }

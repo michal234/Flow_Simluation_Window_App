@@ -37,7 +37,7 @@ void ResultsWindow::on_pushButton_showContour_clicked()
     int variable = 0;
     if( qVariable == "velocity" )
         variable = 1;
-    if( qVariable == "presure" )
+    if( qVariable == "pressure" )
         variable = 2;
 
     int w = ui->label_pic->width();
@@ -46,17 +46,40 @@ void ResultsWindow::on_pushButton_showContour_clicked()
     int ws = ui->label_scale->width();
     int hs = ui->label_scale->height();
 
+    double min = 0.0;
+    double max = 0.0;
+
+    QString qMin;
+    QString qMax;
+
     switch(variable)
     {
     case 1:
-        ui->label_pic->setPixmap(QPixmap::fromImage(this->mw->userInterface.ShowResults()).scaled(w, h, Qt::KeepAspectRatio));
+        ui->label_pic->setPixmap(QPixmap::fromImage(this->mw->userInterface.ShowResults(variable)).scaled(w, h, Qt::KeepAspectRatio));
         ui->label_scale->setPixmap(QPixmap::fromImage(this->mw->userInterface.ShowScale()).scaled(ws, hs, Qt::KeepAspectRatio));
-        double min = this->mw->userInterface.GetMinValue(variable);
-        double max = this->mw->userInterface.GetMaxValue(variable);
-        QString qMin = QString::number(min, 'g', 2);
-        QString qMax = QString::number(max, 'g', 2);
+        min = this->mw->userInterface.GetMinValue(variable);
+        max = this->mw->userInterface.GetMaxValue(variable);
+        qMin.setNum(min, 'f', 2);
+        qMax.setNum(max, 'f', 2);
+        qMin.append(" [m/s]");
+        qMax.append(" [m/s]");
         ui->label_min->setText(qMin);
         ui->label_max->setText(qMax);
+        ui->textEdit_info->append(">>Velocity field is shown");
+        break;
+
+    case 2:
+        ui->label_pic->setPixmap(QPixmap::fromImage(this->mw->userInterface.ShowResults(variable)).scaled(w, h, Qt::KeepAspectRatio));
+        ui->label_scale->setPixmap(QPixmap::fromImage(this->mw->userInterface.ShowScale()).scaled(ws, hs, Qt::KeepAspectRatio));
+        min = this->mw->userInterface.GetMinValue(variable);
+        max = this->mw->userInterface.GetMaxValue(variable);
+        qMin.setNum(min, 'f', 2);
+        qMax.setNum(max, 'f', 2);
+        qMin.append(" [Pa]");
+        qMax.append(" [Pa]");
+        ui->label_min->setText(qMin);
+        ui->label_max->setText(qMax);
+        ui->textEdit_info->append(">>Pressure field is shown");
         break;
 
     }

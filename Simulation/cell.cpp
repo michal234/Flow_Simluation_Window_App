@@ -12,6 +12,7 @@ Cell::Cell()
 
     fluid_amount = 0.0;
     velocity = 0.0;
+    startVelocity = 0.0;
 
     typeOfNeighbourhood = 0;
     typeOfNeighbourhoodOnSlant = 0;
@@ -36,6 +37,7 @@ Cell::Cell(bool fluid, bool outer)
 
     fluid_amount = 0.0;
     velocity = 0.0;
+    startVelocity = 0.0;
 
     typeOfNeighbourhood = 0;
     typeOfNeighbourhoodOnSlant = 0;
@@ -62,6 +64,7 @@ Cell::Cell(bool fluid, bool boundary, int x, int y)
 
     fluid_amount = 0.0;
     velocity = 0.0;
+    startVelocity = 0.0;
 
     typeOfNeighbourhood = 0;
     typeOfNeighbourhoodOnSlant = 0;
@@ -109,6 +112,12 @@ double Cell::GetFluidAmount()
 double Cell::GetVelocity()
 {
     return velocity;
+}
+
+double Cell::GetPressure()
+{
+    double p = 0.5 * DENSITY * (startVelocity * startVelocity - this->GetVelocity() * this->GetVelocity() );
+    return p;
 }
 
 int Cell::GetX()
@@ -1751,6 +1760,11 @@ void Cell::SetBottomInput(double input)
 void Cell::SetLeftInput(double input)
 {
     this->input_left_next += input;
+}
+
+void Cell::SetStartVelocity(double v)
+{
+    this->startVelocity = v;
 }
 
 void Cell::Update()

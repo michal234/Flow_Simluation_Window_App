@@ -4,17 +4,29 @@ Results::Results()
 {
     maxVelocity = 0.0;
     minVelocity = 0.0;
+
+    velocityCalculated = pressureCalculated = false;
 }
 
 Results::Results(vector<Cell> cg, int rows, int cols)
 {
     CellGrid = cg;
     results = Mat::zeros(rows, cols, 16);
+    pressureField = Mat::zeros(rows, cols, 16);
     qResults = QImage(cols, rows, QImage::Format_RGB32);
+    qPressureField = QImage(cols, rows, QImage::Format_RGB32);
+
+    maxVelocity = 0.0;
+    minVelocity = 0.0;
+
+    velocityCalculated = pressureCalculated = false;
 }
 
 QImage Results::ShowVelocityContour()
 {
+    if( velocityCalculated )
+        return qResults;
+
     double min = FindMinimumVelocity();
     double max = FindMaximumVelocity();
     double x = 0.0;
@@ -46,11 +58,50 @@ QImage Results::ShowVelocityContour()
         }
     }
 
-    /*namedWindow("Velocity", WINDOW_NORMAL);
-    imshow("Velocity", results);
-    waitKey(0);*/
+    velocityCalculated = true;
 
     return qResults;
+}
+
+QImage Results::ShowPressureContour()
+{
+    if( pressureCalculated )
+        return qPressureField;
+
+    double min = FindMinimumPressure();
+    double max = FindMaximumPressure();
+    double x = 0.0;
+
+    for (int i = 0; i < pressureField.rows; i++)
+    {
+        for (int j = 0; j < pressureField.cols; j++)
+        {
+            if (!CellGrid[i * pressureField.cols + j].GetFluid())
+            {
+                Vec3b v;
+                v[0] = 0;
+                v[1] = 0;
+                v[2] = 0;
+                pressureField.at<Vec3b>(i, j) = v;
+
+                QColor color(0, 0, 0);
+                qPressureField.setPixelColor(j, i, color);
+            }
+            else
+            {
+                x = ( CellGrid[i * pressureField.cols + j].GetPressure() - min) / (max - min);
+                Vec3b v = SetColour(x);
+                pressureField.at<Vec3b>(i, j) = v;
+
+                QColor color(v[2], v[1], v[0]);
+                qPressureField.setPixelColor(j, i, color);
+            }
+        }
+    }
+
+    pressureCalculated = true;
+
+    return qPressureField;
 }
 
 QImage Results::ShowScale()
@@ -97,6 +148,34 @@ double Results::FindMaximumVelocity()
     return max;
 }
 
+double Results::FindMinimumPressure()
+{
+    double min = DBL_MAX;
+    for (int i = 0; i < CellGrid.size(); i++)
+    {
+        if( CellGrid[i].GetFluid() && CellGrid[i].GetPressure() < min )
+            min = CellGrid[i].GetPressure();
+    }
+
+    this->minPressure = min;
+
+    return min;
+}
+
+double Results::FindMaximumPressure()
+{
+    double max = DBL_MIN;
+    for (int i = 0; i < CellGrid.size(); i++)
+    {
+        if (CellGrid[i].GetFluid() && CellGrid[i].GetPressure() > max)
+            max = CellGrid[i].GetPressure();
+    }
+
+    this->maxPressure = max;
+
+    return max;
+}
+
 Vec3b Results::SetColour(double x)
 {
     Vec3b v;
@@ -123,4 +202,14 @@ double Results::GetMinVelocityValue()
 double Results::GetMaxVelocityValue()
 {
     return this->maxVelocity;
+}
+
+double Results::GetMinPressureValue()
+{
+    return this->minPressure;
+}
+
+double Results::GetMaxPressureValue()
+{
+    return this->maxPressure;
 }

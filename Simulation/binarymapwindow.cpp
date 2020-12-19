@@ -8,6 +8,8 @@ BinaryMapWindow::BinaryMapWindow(QWidget *parent, MainWindow* mw) :
 {
     ui->setupUi(this);
     this->mw = mw;
+
+    ui->textEdit_info->setReadOnly(true);
 }
 
 BinaryMapWindow::~BinaryMapWindow()
@@ -23,12 +25,12 @@ void BinaryMapWindow::on_pushButton_clicked()
     QBitmap map(qPath);
     if( map.isNull() )
     {
-        ui->label_info->setText("Cannot open selected picture. Check if the path is correct");
+        ui->textEdit_info->append(">>Cannot open selected picture. Check if the path is correct");
         ui->label_pic->clear();
     }
     else
     {
-        ui->label_info->setText("Binary map was insert correctly");
+        ui->textEdit_info->append(">>Binary map was inserted correctly");
         mw->userInterface.SetBinaryMap(qPath, mPath);
         int w = ui->label_pic->width();
         int h = ui->label_pic->height();
