@@ -168,7 +168,51 @@ void Cell::SetTypeOfNeighbourhoodOnSlant(int type)
 
 void Cell::FluidFlow()
 {
+    //calculate the coordinates of the output vector
+    double x_direction = input_left - input_right;
+    double y_direction = input_bottom - input_top;
 
+    //save input velocity
+    velocity = sqrt(x_direction * x_direction + y_direction * y_direction);
+
+    //save total input
+    input_total = input_left + input_bottom + input_right + input_top;
+
+    //if velocity is 0, call UniformFlow()
+    if( abs(velocity) < 1e-5 )
+    {
+        UniformFlow();
+        return;
+    }
+
+    //calculate ox, oy and quadrant
+    int ox = 0;
+    int oy = 0;
+    int quadrant = 0;
+
+    //calculate ox
+    if( abs(x_direction) > 1e-5 && x_direction > 0 && abs(y_direction) < 1e-5 )
+        ox = 1;
+    else if( abs(x_direction) > 1e-5 && x_direction < 0 && abs(y_direction) < 1e-5 )
+        ox = -1;
+
+    //calculate oy
+    if( abs(y_direction) > 1e-5 && y_direction > 0 && abs(x_direction) < 1e-5 )
+        oy = 1;
+    else if( abs(y_direction) > 1e-5 && y_direction < 0 && abs(x_direction) < 1e-5 )
+        oy = -1;
+
+    //calculate quadrant
+    if( ox == 0 && oy == 0 )
+    {
+        if( x_direction > 0 && y_direction > 0 )
+            quadrant = 1;
+        if( x_direction < 0 && y_direction > 0 )
+            quadrant = 2;
+
+    }
+
+    /*
     //calculate direction of output
     double x_direction = input_left - input_right;
     double y_direction = input_bottom - input_top;
@@ -177,7 +221,7 @@ void Cell::FluidFlow()
 
     input_total = input_left + input_bottom + input_right + input_top;
 
-    if( abs(input_total) < 1e-5 || input_total > MAX_VALUE)
+    if( abs(input_total) < 1e-5 )// || input_total > MAX_VALUE)
         return;
 
     if (abs(x_direction) < 1e-5 && abs(y_direction) < 1e-5 )
@@ -1536,7 +1580,7 @@ void Cell::FluidFlow()
             bottom_flow = input_total;
             FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
             break;
-    }
+    }*/
 
 }
 

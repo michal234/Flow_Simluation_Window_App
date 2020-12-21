@@ -9,7 +9,7 @@
 #include "opencv2/highgui/highgui.hpp"
 
 #define PI 3.14159265
-#define MAX_VALUE 50
+//#define MAX_VALUE 50
 #define DENSITY 1000
 
 using namespace std;
