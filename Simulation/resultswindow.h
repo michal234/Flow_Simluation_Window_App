@@ -22,6 +22,7 @@ public:
 private slots:
     void on_pushButton_showContour_clicked();
 
+
 private:
     Ui::ResultsWindow *ui;
     MainWindow* mw;

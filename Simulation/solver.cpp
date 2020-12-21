@@ -155,7 +155,7 @@ vector<Cell> Solver::Simulate()
     //RemoveExtremalPoints();
     Standarization();
     //UpdateGrid();
-    //RemoveExtremalPoints();
+    RemoveExtremalPoints();
     //ShowStep();
 
     calculated = true;
@@ -486,7 +486,8 @@ void Solver::Standarization()
         for (int i = 0; i < cellGridRows; i++)
         {
             if( CellGrid[i*cellGridCols + j].GetFluid() )
-                fluid_amount += CellGrid[i * cellGridCols + j].GetFluidAmount();
+                //fluid_amount += CellGrid[i * cellGridCols + j].GetFluidAmount();
+                fluid_amount += CellGrid[i * cellGridCols + j].GetVelocity();
         }
 
         if (abs(fluid_input - fluid_amount) > 1e-3 && abs(fluid_amount) > 1e-5 )
@@ -531,8 +532,8 @@ void Solver::RemoveExtremalPoints()
             if (FluidCells[i]->GetVelocity() > mean + 2 * sigma)
             {
                 nExtremal++;
-                //FluidCells[i]->GetMeanFromNeighbours(mean + 2*sigma);
-                FluidCells[i]->StandarizeCell( mean / FluidCells[i]->GetVelocity() );
+                FluidCells[i]->GetMeanFromNeighbours(mean + 2*sigma);
+                //FluidCells[i]->StandarizeCell( mean / FluidCells[i]->GetVelocity() );
             }
         }
     }

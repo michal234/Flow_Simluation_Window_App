@@ -34,6 +34,7 @@ class Cell
         double fluid_amount;	//amount of fluid in the cell (= total_input)
         double velocity;
         double startVelocity;
+        double prevVelocity;
 
         //amount of fluid that flows into the cell in current step
         double input_top;
@@ -70,6 +71,7 @@ class Cell
         void FlowToNeighbours(double top_flow, double right_flow, double bottom_flow, double left_flow);
         void FlowToNeighboursOnSlant(double top_flow, double right_flow, double bottom_flow, double left_flow, int direction);
         int ChooseDirection(double x_direction, double y_direction);
+        int ChooseDirection2(int ox, int oy, int quadrant, double angle);
 
     public:
         Cell();

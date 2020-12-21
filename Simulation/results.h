@@ -49,6 +49,9 @@ class Results
         double GetMinPressureValue();
         double GetMaxPressureValue();
 
+        void ShowVelocityMat();
+        void ShowPressureMat();
+
         QImage ShowScale();
 };
 

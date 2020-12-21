@@ -213,3 +213,17 @@ double Results::GetMaxPressureValue()
 {
     return this->maxPressure;
 }
+
+void Results::ShowVelocityMat()
+{
+    namedWindow("Velocity");
+    imshow("Velocity", this->results);
+    waitKey();
+}
+
+void Results::ShowPressureMat()
+{
+    namedWindow("Pressure");
+    imshow("Pressure", this->pressureField);
+    waitKey();
+}

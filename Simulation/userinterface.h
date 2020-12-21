@@ -27,6 +27,8 @@ public:
     double GetMinValue(int variable);
     double GetMaxValue(int variable);
 
+    void ShowResultsMat(int variable);
+
 private:
     BinaryMap bm;
     Solver solver;
