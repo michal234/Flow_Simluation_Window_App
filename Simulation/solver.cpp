@@ -144,8 +144,8 @@ vector<Cell> Solver::Simulate()
                 unbalancedCells++;
         }
 
-        //if( x%10 == 0 )
-            //RemoveExtremalPoints();
+        if( x%10 == 0 )
+            RemoveExtremalPoints();
 
         UpdateGrid();
         //ShowStep();
@@ -153,7 +153,7 @@ vector<Cell> Solver::Simulate()
     }while(x <= this->maxIter && unbalancedCells != 0);
 
     //RemoveExtremalPoints();
-    Standarization();
+    //Standarization();
     //UpdateGrid();
     RemoveExtremalPoints();
     //ShowStep();
