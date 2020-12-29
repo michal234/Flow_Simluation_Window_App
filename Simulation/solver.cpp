@@ -153,10 +153,10 @@ vector<Cell> Solver::Simulate()
         cout << unbalancedCells << endl;
     }while(x <= this->maxIter && unbalancedCells != 0);
 
-    //RemoveExtremalPoints();
+    RemoveExtremalPoints();
     //Standarization();
     //UpdateGrid();
-    RemoveExtremalPoints();
+    //RemoveExtremalPoints();
     //ShowStep();
 
     calculated = true;
