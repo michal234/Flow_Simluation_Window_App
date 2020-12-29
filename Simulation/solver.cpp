@@ -150,6 +150,7 @@ vector<Cell> Solver::Simulate()
         UpdateGrid();
         //ShowStep();
         x++;
+        cout << unbalancedCells << endl;
     }while(x <= this->maxIter && unbalancedCells != 0);
 
     //RemoveExtremalPoints();

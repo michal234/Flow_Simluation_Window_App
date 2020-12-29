@@ -92,7 +92,10 @@ bool Cell::GetSource()
 
 bool Cell::GetBalance()
 {
-    if( abs(input_total - output_total) < 1e-5 )
+    //if( abs(input_total - output_total) < 1e-5 )
+        //return true;
+    //return false;
+    if( abs(velocity - prevVelocity) < 1e-5 )
         return true;
     return false;
 }
@@ -2353,15 +2356,15 @@ void Cell::UniformFlow()	//if vectors reduce itself, this function is performed
         case 0:	//(t && r && b && l)
             if (typeOfNeighbourhoodOnSlant == 0)
             {
-                top_flow = this->velocity / 8;
-                right_flow = this->velocity / 8;
-                bottom_flow = this->velocity / 8;
-                left_flow = this->velocity / 8;
+                top_flow = this->input_total / 8;
+                right_flow = this->input_total / 8;
+                bottom_flow = this->input_total / 8;
+                left_flow = this->input_total / 8;
 
-                top_right_flow = this->velocity / 8;
-                bottom_right_flow = this->velocity / 8;
-                bottom_left_flow = this->velocity / 8;
-                top_left_flow = this->velocity / 8;
+                top_right_flow = this->input_total / 8;
+                bottom_right_flow = this->input_total / 8;
+                bottom_left_flow = this->input_total / 8;
+                top_left_flow = this->input_total / 8;
 
                 FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
                 FlowToNeighboursOnSlant(top_right_flow/sqrt(2), top_right_flow/sqrt(2), 0, 0, 2);
@@ -2371,42 +2374,42 @@ void Cell::UniformFlow()	//if vectors reduce itself, this function is performed
             }
             else
             {
-                top_flow = 0.25 * this->velocity;
-                right_flow = 0.25 * this->velocity;
-                bottom_flow = 0.25 * this->velocity;
-                left_flow = 0.25 * this->velocity;
+                top_flow = 0.25 * this->input_total;
+                right_flow = 0.25 * this->input_total;
+                bottom_flow = 0.25 * this->input_total;
+                left_flow = 0.25 * this->input_total;
                 FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
             }
             break;
 
         case 1: //(!t && r && b && l)
             top_flow = 0.0;
-            right_flow = this->velocity / 3;
-            bottom_flow = this->velocity / 3;
-            left_flow = this->velocity / 3;
+            right_flow = this->input_total / 3;
+            bottom_flow = this->input_total / 3;
+            left_flow = this->input_total / 3;
             FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
             break;
 
         case 2: //(t && !r && b && l)
-            top_flow = this->velocity / 3;
+            top_flow = this->input_total / 3;
             right_flow = 0.0;
-            bottom_flow = this->velocity / 3;
-            left_flow = this->velocity / 3;
+            bottom_flow = this->input_total / 3;
+            left_flow = this->input_total / 3;
             FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
             break;
 
         case 3: //(t && r && !b && l)
-            top_flow = this->velocity / 3;
-            right_flow = this->velocity / 3;
+            top_flow = this->input_total / 3;
+            right_flow = this->input_total / 3;
             bottom_flow = 0.0;
-            left_flow = this->velocity / 3;
+            left_flow = this->input_total / 3;
             FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
             break;
 
         case 4: //(t && r && b && !l)
-            top_flow = this->velocity / 3;
-            right_flow = this->velocity / 3;
-            bottom_flow = this->velocity / 3;
+            top_flow = this->input_total / 3;
+            right_flow = this->input_total / 3;
+            bottom_flow = this->input_total / 3;
             left_flow = 0.0;
             FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
             break;
@@ -2414,46 +2417,46 @@ void Cell::UniformFlow()	//if vectors reduce itself, this function is performed
         case 5: //(!t && !r && b && l)
             top_flow = 0.0;
             right_flow = 0.0;
-            bottom_flow = this->velocity / 2;
-            left_flow = this->velocity / 2;
+            bottom_flow = this->input_total / 2;
+            left_flow = this->input_total / 2;
             FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
             break;
 
         case 6: //(!t && r && !b && l)
             top_flow = 0.0;
-            right_flow = this->velocity / 2;
+            right_flow = this->input_total / 2;
             bottom_flow = 0.0;
-            left_flow = this->velocity / 2;
+            left_flow = this->input_total / 2;
             FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
             break;
 
         case 7: //(!t && r && b && !l)
             top_flow = 0.0;
-            right_flow = this->velocity / 2;
-            bottom_flow = this->velocity / 2;
+            right_flow = this->input_total / 2;
+            bottom_flow = this->input_total / 2;
             left_flow = 0.0;
             FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
             break;
 
         case 8: //(t && !r && !b && l)
-            top_flow = this->velocity / 2;
+            top_flow = this->input_total / 2;
             right_flow = 0.0;
             bottom_flow = 0.0;
-            left_flow = this->velocity / 2;
+            left_flow = this->input_total / 2;
             FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
             break;
 
         case 9: //(t && !r && b && !l)
-            top_flow = this->velocity / 2;
+            top_flow = this->input_total / 2;
             right_flow = 0.0;
-            bottom_flow = this->velocity / 2;
+            bottom_flow = this->input_total / 2;
             left_flow = 0.0;
             FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
             break;
 
         case 10: //(t && r && !b && !l)
-            top_flow = this->velocity / 2;
-            right_flow = this->velocity / 2;
+            top_flow = this->input_total / 2;
+            right_flow = this->input_total / 2;
             bottom_flow = 0.0;
             left_flow = 0.0;
             FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
@@ -2463,12 +2466,12 @@ void Cell::UniformFlow()	//if vectors reduce itself, this function is performed
             top_flow = 0.0;
             right_flow = 0.0;
             bottom_flow = 0.0;
-            left_flow = this->velocity;
+            left_flow = this->input_total;
             FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
             break;
 
         case 12: //(t && !r && !b && !l)
-            top_flow = this->velocity;
+            top_flow = this->input_total;
             right_flow = 0.0;
             bottom_flow = 0.0;
             left_flow = 0.0;
@@ -2477,7 +2480,7 @@ void Cell::UniformFlow()	//if vectors reduce itself, this function is performed
 
         case 13: //(!t && r && !b && !l)
             top_flow = 0.0;
-            right_flow = this->velocity;
+            right_flow = this->input_total;
             bottom_flow = 0.0;
             left_flow = 0.0;
             FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
@@ -2486,7 +2489,7 @@ void Cell::UniformFlow()	//if vectors reduce itself, this function is performed
         case 14: //(!t && !r && b && !l)
             top_flow = 0.0;
             right_flow = 0.0;
-            bottom_flow = this->velocity;
+            bottom_flow = this->input_total;
             left_flow = 0.0;
             FlowToNeighbours(top_flow, right_flow, bottom_flow, left_flow);
             break;
