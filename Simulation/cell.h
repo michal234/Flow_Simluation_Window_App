@@ -22,6 +22,7 @@ class Cell
         bool boundary;	//if cell lays on X=0 or X=N-1 or Y=0 or Y=M-1 it's true
         bool outlet;
         bool outer_boundary;
+        bool refactored;
 
         int x;	//X-coordinate of the cell
         int y;	//Y-coordinate of the cell
@@ -35,6 +36,8 @@ class Cell
         double velocity;
         double startVelocity;
         double prevVelocity;
+        double velocityX;
+        double velocityY;
 
         //amount of fluid that flows into the cell in current step
         double input_top;
@@ -88,6 +91,8 @@ class Cell
         double GetFluidAmount();
         double GetVelocity();
         double GetPressure();
+        double GetVelocityX();
+        double GetVelocityY();
 
         int GetX();
         int GetY();

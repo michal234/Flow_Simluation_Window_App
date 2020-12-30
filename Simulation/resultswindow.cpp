@@ -39,6 +39,10 @@ void ResultsWindow::on_pushButton_showContour_clicked()
         variable = 1;
     if( qVariable == "pressure" )
         variable = 2;
+    if( qVariable == "velocity X" )
+        variable = 3;
+    if( qVariable == "velocity Y" )
+        variable = 4;
 
     int w = ui->label_pic->width();
     int h = ui->label_pic->height();
@@ -80,6 +84,34 @@ void ResultsWindow::on_pushButton_showContour_clicked()
         ui->label_min->setText(qMin);
         ui->label_max->setText(qMax);
         ui->textEdit_info->append(">>Pressure field is shown");
+        break;
+
+    case 3:
+        ui->label_pic->setPixmap(QPixmap::fromImage(this->mw->userInterface.ShowResults(variable)).scaled(w, h, Qt::KeepAspectRatio));
+        ui->label_scale->setPixmap(QPixmap::fromImage(this->mw->userInterface.ShowScale()).scaled(ws, hs, Qt::KeepAspectRatio));
+        min = this->mw->userInterface.GetMinValue(variable);
+        max = this->mw->userInterface.GetMaxValue(variable);
+        qMin.setNum(min, 'f', 2);
+        qMax.setNum(max, 'f', 2);
+        qMin.append(" [m/s]");
+        qMax.append(" [m/s]");
+        ui->label_min->setText(qMin);
+        ui->label_max->setText(qMax);
+        ui->textEdit_info->append(">>Velocity in X-direction field is shown");
+        break;
+
+    case 4:
+        ui->label_pic->setPixmap(QPixmap::fromImage(this->mw->userInterface.ShowResults(variable)).scaled(w, h, Qt::KeepAspectRatio));
+        ui->label_scale->setPixmap(QPixmap::fromImage(this->mw->userInterface.ShowScale()).scaled(ws, hs, Qt::KeepAspectRatio));
+        min = this->mw->userInterface.GetMinValue(variable);
+        max = this->mw->userInterface.GetMaxValue(variable);
+        qMin.setNum(min, 'f', 2);
+        qMax.setNum(max, 'f', 2);
+        qMin.append(" [m/s]");
+        qMax.append(" [m/s]");
+        ui->label_min->setText(qMin);
+        ui->label_max->setText(qMax);
+        ui->textEdit_info->append(">>Velocity in Y-direction field is shown");
         break;
 
     }

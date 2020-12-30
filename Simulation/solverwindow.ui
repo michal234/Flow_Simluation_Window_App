@@ -11,7 +11,11 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Solver</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>S.png</normaloff>S.png</iconset>
   </property>
   <widget class="QPushButton" name="pushButton">
    <property name="geometry">

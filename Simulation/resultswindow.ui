@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Results</string>
   </property>
   <widget class="QPushButton" name="pushButton">
    <property name="geometry">
@@ -81,6 +81,16 @@
    <item>
     <property name="text">
      <string>velocity</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>velocity X</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>velocity Y</string>
     </property>
    </item>
    <item>

@@ -59,6 +59,12 @@ QImage UserInterface::ShowResults(int variable)
 
     case 2:
         return this->results.ShowPressureContour();
+
+    case 3:
+        return this->results.ShowVelocityXContour();
+
+    case 4:
+        return this->results.ShowVelocityYContour();
     }
 
 }
@@ -77,6 +83,12 @@ double UserInterface::GetMinValue(int variable)
 
     case 2:
         return this->results.GetMinPressureValue();
+
+    case 3:
+        return this->results.GetMinVelocityXValue();
+
+    case 4:
+        return this->results.GetMinVelocityYValue();
     }
 }
 
@@ -89,6 +101,12 @@ double UserInterface::GetMaxValue(int variable)
 
     case 2:
         return this->results.GetMaxPressureValue();
+
+    case 3:
+        return this->results.GetMaxVelocityXValue();
+
+    case 4:
+        return this->results.GetMaxVelocityYValue();
     }
 }
 

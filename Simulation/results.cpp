@@ -6,6 +6,7 @@ Results::Results()
     minVelocity = 0.0;
 
     velocityCalculated = pressureCalculated = false;
+    velocityXCalculated = velocityYCalculated = false;
 }
 
 Results::Results(vector<Cell> cg, int rows, int cols)
@@ -13,13 +14,18 @@ Results::Results(vector<Cell> cg, int rows, int cols)
     CellGrid = cg;
     results = Mat::zeros(rows, cols, 16);
     pressureField = Mat::zeros(rows, cols, 16);
+    velocityX = Mat::zeros(rows, cols, 16);
+    velocityY = Mat::zeros(rows, cols, 16);
     qResults = QImage(cols, rows, QImage::Format_RGB32);
     qPressureField = QImage(cols, rows, QImage::Format_RGB32);
+    qVelocityX = QImage(cols, rows, QImage::Format_RGB32);
+    qVelocityY = QImage(cols, rows, QImage::Format_RGB32);
 
     maxVelocity = 0.0;
     minVelocity = 0.0;
 
     velocityCalculated = pressureCalculated = false;
+    velocityXCalculated = velocityYCalculated = false;
 }
 
 QImage Results::ShowVelocityContour()
@@ -104,6 +110,88 @@ QImage Results::ShowPressureContour()
     return qPressureField;
 }
 
+QImage Results::ShowVelocityXContour()
+{
+    if( velocityXCalculated )
+        return qVelocityX;
+
+    double min = FindMinimumVelocityX();
+    double max = FindMaximumVelocityX();
+    double x = 0.0;
+
+    for (int i = 0; i < velocityX.rows; i++)
+    {
+        for (int j = 0; j < velocityX.cols; j++)
+        {
+            if (!CellGrid[i * velocityX.cols + j].GetFluid())
+            {
+                Vec3b v;
+                v[0] = 0;
+                v[1] = 0;
+                v[2] = 0;
+                velocityX.at<Vec3b>(i, j) = v;
+
+                QColor color(0, 0, 0);
+                qVelocityX.setPixelColor(j, i, color);
+            }
+            else
+            {
+                x = ( CellGrid[i * velocityX.cols + j].GetVelocity() - min) / (max - min);
+                Vec3b v = SetColour(x);
+                velocityX.at<Vec3b>(i, j) = v;
+
+                QColor color(v[2], v[1], v[0]);
+                qVelocityX.setPixelColor(j, i, color);
+            }
+        }
+    }
+
+    velocityXCalculated = true;
+
+    return qVelocityX;
+}
+
+QImage Results::ShowVelocityYContour()
+{
+    if( velocityYCalculated )
+        return qVelocityY;
+
+    double min = FindMinimumVelocityY();
+    double max = FindMaximumVelocityY();
+    double x = 0.0;
+
+    for (int i = 0; i < velocityY.rows; i++)
+    {
+        for (int j = 0; j < velocityY.cols; j++)
+        {
+            if (!CellGrid[i * velocityY.cols + j].GetFluid())
+            {
+                Vec3b v;
+                v[0] = 0;
+                v[1] = 0;
+                v[2] = 0;
+                velocityY.at<Vec3b>(i, j) = v;
+
+                QColor color(0, 0, 0);
+                qVelocityY.setPixelColor(j, i, color);
+            }
+            else
+            {
+                x = ( CellGrid[i * velocityY.cols + j].GetVelocity() - min) / (max - min);
+                Vec3b v = SetColour(x);
+                velocityY.at<Vec3b>(i, j) = v;
+
+                QColor color(v[2], v[1], v[0]);
+                qVelocityY.setPixelColor(j, i, color);
+            }
+        }
+    }
+
+    velocityYCalculated = true;
+
+    return qVelocityY;
+}
+
 QImage Results::ShowScale()
 {
     QImage scale(SCALE_WIDTH, SCALE_HEIGHT, QImage::Format_RGB32);
@@ -176,6 +264,62 @@ double Results::FindMaximumPressure()
     return max;
 }
 
+double Results::FindMinimumVelocityX()
+{
+    double min = DBL_MAX;
+    for (int i = 0; i < CellGrid.size(); i++)
+    {
+        if( CellGrid[i].GetFluid() && CellGrid[i].GetVelocityX() < min )
+            min = CellGrid[i].GetVelocityX();
+    }
+
+    this->minVelocityX = min;
+
+    return min;
+}
+
+double Results::FindMaximumVelocityX()
+{
+    double max = DBL_MIN;
+    for (int i = 0; i < CellGrid.size(); i++)
+    {
+        if (CellGrid[i].GetFluid() && CellGrid[i].GetVelocityX() > max)
+            max = CellGrid[i].GetVelocityX();
+    }
+
+    this->maxVelocityX = max;
+
+    return max;
+}
+
+double Results::FindMinimumVelocityY()
+{
+    double min = DBL_MAX;
+    for (int i = 0; i < CellGrid.size(); i++)
+    {
+        if( CellGrid[i].GetFluid() && CellGrid[i].GetVelocityY() < min )
+            min = CellGrid[i].GetVelocityY();
+    }
+
+    this->minVelocityY = min;
+
+    return min;
+}
+
+double Results::FindMaximumVelocityY()
+{
+    double max = DBL_MIN;
+    for (int i = 0; i < CellGrid.size(); i++)
+    {
+        if (CellGrid[i].GetFluid() && CellGrid[i].GetVelocityY() > max)
+            max = CellGrid[i].GetVelocityY();
+    }
+
+    this->maxVelocityY = max;
+
+    return max;
+}
+
 Vec3b Results::SetColour(double x)
 {
     Vec3b v;
@@ -212,6 +356,26 @@ double Results::GetMinPressureValue()
 double Results::GetMaxPressureValue()
 {
     return this->maxPressure;
+}
+
+double Results::GetMinVelocityXValue()
+{
+    return this->minVelocityX;
+}
+
+double Results::GetMaxVelocityXValue()
+{
+    return this->maxVelocityX;
+}
+
+double Results::GetMinVelocityYValue()
+{
+    return this->minVelocityY;
+}
+
+double Results::GetMaxVelocityYValue()
+{
+    return this->maxVelocityY;
 }
 
 void Results::ShowVelocityMat()

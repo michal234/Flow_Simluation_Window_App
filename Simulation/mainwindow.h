@@ -26,6 +26,12 @@ private slots:
 
     void on_actionResults_triggered();
 
+    void on_pushButton_binaryMap_clicked();
+
+    void on_pushButton_solver_clicked();
+
+    void on_pushButton_results_clicked();
+
 private:
     Ui::MainWindow *ui;
 };

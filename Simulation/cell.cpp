@@ -20,7 +20,7 @@ Cell::Cell()
 
     x = y = 0;
 
-    fluid = source = boundary = outlet = outer_boundary = false;
+    fluid = source = boundary = outlet = outer_boundary = refactored = false;
 }
 
 Cell::Cell(bool fluid, bool outer)
@@ -46,7 +46,7 @@ Cell::Cell(bool fluid, bool outer)
 
     x = y = 0;
 
-    source = boundary = outlet = false;
+    source = boundary = outlet = refactored = false;
 }
 
 Cell::Cell(bool fluid, bool boundary, int x, int y)
@@ -72,7 +72,7 @@ Cell::Cell(bool fluid, bool boundary, int x, int y)
     typeOfNeighbourhood = 0;
     typeOfNeighbourhoodOnSlant = 0;
 
-    source = outlet = outer_boundary = false;
+    source = outlet = outer_boundary = refactored = false;
 }
 
 bool Cell::GetFluid()
@@ -124,6 +124,20 @@ double Cell::GetPressure()
 {
     double p = 0.5 * DENSITY * (startVelocity * startVelocity - this->GetVelocity() * this->GetVelocity() );
     return p;
+}
+
+double Cell::GetVelocityX()
+{
+    if(!refactored)
+        return abs(input_left - input_right);
+    return velocityX;
+}
+
+double Cell::GetVelocityY()
+{
+    if(!refactored)
+        return abs(input_bottom - input_top);
+    return velocityY;
 }
 
 int Cell::GetX()
@@ -2896,5 +2910,13 @@ void Cell::GetMeanFromNeighbours(double sigma)
 
     mean = sum / nNeighbours;
 
-    velocity = mean;
+    double vx = this->GetVelocityX();
+    double vy = this->GetVelocityY();
+    double f = velocity / mean;
+
+    this->velocityX = vx / f;
+    this->velocityY = vy / f;
+    this->velocity = mean;
+
+    this->refactored = true;
 }
