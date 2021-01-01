@@ -72,6 +72,7 @@ class Cell
 
         void UniformFlow();
         void FlowToNeighbours(double top_flow, double right_flow, double bottom_flow, double left_flow);
+        void FlowToNeighbours2(double top_flow, double right_flow, double bottom_flow, double left_flow, int direction);
         void FlowToNeighboursOnSlant(double top_flow, double right_flow, double bottom_flow, double left_flow, int direction);
         int ChooseDirection(double x_direction, double y_direction);
         int ChooseDirection2(int ox, int oy, int quadrant, double angle);

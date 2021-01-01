@@ -1793,23 +1793,45 @@ void Cell::FluidFlow()
     case 2:
         if(s==0 || s==2 || s==3 || s==4 || s==8 || s==9 || s==10 || s==12)
         {
-            double partialFlow = this->velocity / sqrt(2);
-            FlowToNeighboursOnSlant(partialFlow, partialFlow, 0.0, 0.0, 2);
+            //double partialFlow = this->velocity / sqrt(2);
+            //FlowToNeighboursOnSlant(partialFlow, partialFlow, 0.0, 0.0, 2);
+            if(n==0 || n==3 || n==4 || n==10)
+            {
+                double partialFlow = this->velocity / 3;
+                FlowToNeighboursOnSlant(partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 0.0, 2);
+                FlowToNeighbours2(partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 0.0, 1);
+                FlowToNeighbours2(partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 0.0, 3);
+            }
+            else if(n==2 || n==8 || n==9 || n==12)
+            {
+                double partialFlow = this->velocity / 3;
+                FlowToNeighboursOnSlant(2*partialFlow/sqrt(2), 2*partialFlow/sqrt(2), 0.0, 0.0, 2);
+                FlowToNeighbours2(partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 0.0, 1);
+            }
+            else if(n==1 || n==6 || n==7 || n==13)
+            {
+                double partialFlow = this->velocity / 3;
+                FlowToNeighboursOnSlant(2*partialFlow/sqrt(2), 2*partialFlow/sqrt(2), 0.0, 0.0, 2);
+                FlowToNeighbours2(partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 0.0, 3);
+            }
         }
         else if(n==0 || n==3 || n==4 || n==10)
         {
             double partialFlow = this->velocity / 2;
-            FlowToNeighbours(partialFlow, partialFlow, 0.0, 0.0);
+            FlowToNeighbours2(partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 0.0, 1);
+            FlowToNeighbours2(partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 0.0, 3);
         }
         else if(n==2 || n==8 || n==9 || n==12)
         {
             double partialFlow = this->velocity;
-            FlowToNeighbours(partialFlow, 0.0, 0.0, 0.0);
+            //FlowToNeighbours(partialFlow, 0.0, 0.0, 0.0);
+            FlowToNeighbours2(partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 0.0, 1);
         }
         else if(n==1 || n==6 || n==7 || n==13)
         {
             double partialFlow = this->velocity;
-            FlowToNeighbours(0.0, partialFlow, 0.0, 0.0);
+            //FlowToNeighbours(0.0, partialFlow, 0.0, 0.0);
+            FlowToNeighbours2(partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 0.0, 3);
         }
         else if(s==1 || s==6)
         {
@@ -1830,17 +1852,21 @@ void Cell::FluidFlow()
         else if(n==5)
         {
             double partialFlow = this->velocity / 2;
-            FlowToNeighbours(0.0, 0.0, partialFlow, partialFlow);
+            //FlowToNeighbours(0.0, 0.0, partialFlow, partialFlow);
+            FlowToNeighbours2(0.0, 0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 7);
+            FlowToNeighbours2(0.0, 0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 5);
         }
         else if(n==11)
         {
             double partialFlow = this->velocity;
-            FlowToNeighbours(0.0, 0.0, 0.0, partialFlow);
+            //FlowToNeighbours(0.0, 0.0, 0.0, partialFlow);
+            FlowToNeighbours2(0.0, 0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 7);
         }
         else if(n==14)
         {
             double partialFlow = this->velocity;
-            FlowToNeighbours(0.0, 0.0, partialFlow, 0.0);
+            //FlowToNeighbours(0.0, 0.0, partialFlow, 0.0);
+            FlowToNeighbours2(0.0, 0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 5);
         }
         else
         {
@@ -1941,23 +1967,46 @@ void Cell::FluidFlow()
     case 4:
         if(s==0 || s==1 || s==3 || s==4 || s==6 || s==7 || s==10 || s==13)
         {
-            double partialFlow = this->velocity / sqrt(2);
-            FlowToNeighboursOnSlant(0.0, partialFlow, partialFlow, 0.0, 4);
+            //double partialFlow = this->velocity / sqrt(2);
+            //FlowToNeighboursOnSlant(0.0, partialFlow, partialFlow, 0.0, 4);
+            if(n==0 || n==1 || n==4 || n==7)
+            {
+                double partialFlow = this->velocity / 3;
+                FlowToNeighboursOnSlant(0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 4);
+                FlowToNeighbours2(0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 3);
+                FlowToNeighbours2(0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 5);
+            }
+            else if(n==3 || n==6 || n==10 || n==13)
+            {
+                double partialFlow = this->velocity / 3;
+                FlowToNeighboursOnSlant(0.0, 2*partialFlow/sqrt(2), 2*partialFlow/sqrt(2), 0.0, 4);
+                FlowToNeighbours2(0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 3);
+            }
+            else if(n==2 || n==5 || n==9 || n==14)
+            {
+                double partialFlow = this->velocity / 3;
+                FlowToNeighboursOnSlant(0.0, 2*partialFlow/sqrt(2), 2*partialFlow/sqrt(2), 0.0, 4);
+                FlowToNeighbours2(0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 5);
+            }
         }
         else if(n==0 || n==1 || n==4 || n==7)
         {
             double partialFlow = this->velocity / 2;
-            FlowToNeighbours(0.0, partialFlow, partialFlow, 0.0);
+            //FlowToNeighbours(0.0, partialFlow, partialFlow, 0.0);
+            FlowToNeighbours2(0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 3);
+            FlowToNeighbours2(0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 5);
         }
         else if(n==3 || n==6 || n==10 || n==13)
         {
             double partialFlow = this->velocity;
-            FlowToNeighbours(0.0, partialFlow, 0.0, 0.0);
+            //FlowToNeighbours(0.0, partialFlow, 0.0, 0.0);
+            FlowToNeighbours2(0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 3);
         }
         else if(n==2 || n==5 || n==9 || n==14)
         {
             double partialFlow = this->velocity;
-            FlowToNeighbours(0.0, 0.0, partialFlow, 0.0);
+            //FlowToNeighbours(0.0, 0.0, partialFlow, 0.0);
+            FlowToNeighbours2(0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 5);
         }
         else if(s==2 || s==9)
         {
@@ -1978,17 +2027,21 @@ void Cell::FluidFlow()
         else if(n==8)
         {
             double partialFlow = this->velocity / 2;
-            FlowToNeighbours(partialFlow, 0.0, 0.0, partialFlow);
+            //FlowToNeighbours(partialFlow, 0.0, 0.0, partialFlow);
+            FlowToNeighbours2(partialFlow/sqrt(2), 0.0, 0.0, partialFlow/sqrt(2), 1);
+            FlowToNeighbours2(partialFlow/sqrt(2), 0.0, 0.0, partialFlow/sqrt(2), 7);
         }
         else if(n==12)
         {
             double partialFlow = this->velocity;
-            FlowToNeighbours(partialFlow, 0.0, 0.0, 0.0);
+            //FlowToNeighbours(partialFlow, 0.0, 0.0, 0.0);
+            FlowToNeighbours2(partialFlow/sqrt(2), 0.0, 0.0, partialFlow/sqrt(2), 1);
         }
         else if(n==11)
         {
             double partialFlow = this->velocity;
-            FlowToNeighbours(0.0, 0.0, 0.0, partialFlow);
+            //FlowToNeighbours(0.0, 0.0, 0.0, partialFlow);
+            FlowToNeighbours2(partialFlow/sqrt(2), 0.0, 0.0, partialFlow/sqrt(2), 7);
         }
         else
         {
@@ -2088,23 +2141,46 @@ void Cell::FluidFlow()
     case 6:
         if(s==0 || s==1 || s==2 || s==4 || s==5 || s==7 || s==9 || s==14)
         {
-            double partialFlow = this->velocity / sqrt(2);
-            FlowToNeighboursOnSlant(0.0, 0.0, partialFlow, partialFlow, 4);
+            //double partialFlow = this->velocity / sqrt(2);
+            //FlowToNeighboursOnSlant(0.0, 0.0, partialFlow, partialFlow, 4);
+            if(n==0 || n==1 || n==2 || n==5)
+            {
+                double partialFlow = this->velocity / 3;
+                FlowToNeighboursOnSlant(0.0, 0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 6);
+                FlowToNeighbours2(0.0, 0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 5);
+                FlowToNeighbours2(0.0, 0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 7);
+            }
+            else if(n==3 || n==6 || n==8 || n==11)
+            {
+                double partialFlow = this->velocity / 3;
+                FlowToNeighboursOnSlant(0.0, 0.0, 2*partialFlow/sqrt(2), 2*partialFlow/sqrt(2), 6);
+                FlowToNeighbours2(0.0, 0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 7);
+            }
+            else if(n==4 || n==7 || n==9 || n==14)
+            {
+                double partialFlow = this->velocity / 3;
+                FlowToNeighboursOnSlant(0.0, 0.0, 2*partialFlow/sqrt(2), 2*partialFlow/sqrt(2), 6);
+                FlowToNeighbours2(0.0, 0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 5);
+            }
         }
         else if(n==0 || n==1 || n==2 || n==5)
         {
             double partialFlow = this->velocity / 2;
-            FlowToNeighbours(0.0, 0.0, partialFlow, partialFlow);
+            //FlowToNeighbours(0.0, 0.0, partialFlow, partialFlow);
+            FlowToNeighbours2(0.0, 0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 5);
+            FlowToNeighbours2(0.0, 0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 7);
         }
         else if(n==3 || n==6 || n==8 || n==11)
         {
             double partialFlow = this->velocity;
-            FlowToNeighbours(0.0, 0.0, 0.0, partialFlow);
+            //FlowToNeighbours(0.0, 0.0, 0.0, partialFlow);
+            FlowToNeighbours2(0.0, 0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 7);
         }
         else if(n==4 || n==7 || n==9 || n==14)
         {
             double partialFlow = this->velocity;
-            FlowToNeighbours(0.0, 0.0, partialFlow, 0.0);
+            //FlowToNeighbours(0.0, 0.0, partialFlow, 0.0);
+            FlowToNeighbours2(0.0, 0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 5);
         }
         else if(s==3 || s==6)
         {
@@ -2125,17 +2201,21 @@ void Cell::FluidFlow()
         else if(n==10)
         {
             double partialFlow = this->velocity / 2;
-            FlowToNeighbours(partialFlow, partialFlow, 0.0, 0.0);
+            //FlowToNeighbours(partialFlow, partialFlow, 0.0, 0.0);
+            FlowToNeighbours2(partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 0.0, 1);
+            FlowToNeighbours2(partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 0.0, 3);
         }
         else if(n==12)
         {
             double partialFlow = this->velocity;
-            FlowToNeighbours(partialFlow, 0.0, 0.0, 0.0);
+            //FlowToNeighbours(partialFlow, 0.0, 0.0, 0.0);
+            FlowToNeighbours2(partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 0.0, 1);
         }
         else if(n==13)
         {
             double partialFlow = this->velocity;
-            FlowToNeighbours(0.0, partialFlow, 0.0, 0.0);
+            //FlowToNeighbours(0.0, partialFlow, 0.0, 0.0);
+            FlowToNeighbours2(partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 0.0, 3);
         }
         else
         {
@@ -2235,23 +2315,46 @@ void Cell::FluidFlow()
     case 8:
         if(s==0 || s==1 || s==2 || s==3 || s==5 || s==6 || s==8 || s==11)
         {
-            double partialFlow = this->velocity / sqrt(2);
-            FlowToNeighboursOnSlant(partialFlow, 0.0, 0.0, partialFlow, 2);
+            //double partialFlow = this->velocity / sqrt(2);
+            //FlowToNeighboursOnSlant(partialFlow, 0.0, 0.0, partialFlow, 2);
+            if(n==0 || n==2 || n==3 || n==8)
+            {
+                double partialFlow = this->velocity / 3;
+                FlowToNeighboursOnSlant(partialFlow/sqrt(2), 0.0, 0.0, partialFlow/sqrt(2), 8);
+                FlowToNeighbours2(partialFlow/sqrt(2), 0.0, 0.0, partialFlow/sqrt(2), 1);
+                FlowToNeighbours2(partialFlow/sqrt(2), 0.0, 0.0, partialFlow/sqrt(2), 7);
+            }
+            else if(n==4 || n==9 || n==10 || n==12)
+            {
+                double partialFlow = this->velocity / 3;
+                FlowToNeighboursOnSlant(2*partialFlow/sqrt(2), 0.0, 0.0, 2*partialFlow/sqrt(2), 8);
+                FlowToNeighbours2(partialFlow/sqrt(2), 0.0, 0.0, partialFlow/sqrt(2), 1);
+            }
+            else if(n==1 || n==5 || n==6 || n==11)
+            {
+                double partialFlow = this->velocity / 3;
+                FlowToNeighboursOnSlant(2*partialFlow/sqrt(2), 0.0, 0.0, 2*partialFlow/sqrt(2), 8);
+                FlowToNeighbours2(partialFlow/sqrt(2), 0.0, 0.0, partialFlow/sqrt(2), 7);
+            }
         }
         else if(n==0 || n==2 || n==3 || n==8)
         {
             double partialFlow = this->velocity / 2;
-            FlowToNeighbours(partialFlow, 0.0, 0.0, partialFlow);
+            //FlowToNeighbours(partialFlow, 0.0, 0.0, partialFlow);
+            FlowToNeighbours2(partialFlow/sqrt(2), 0.0, 0.0, partialFlow/sqrt(2), 1);
+            FlowToNeighbours2(partialFlow/sqrt(2), 0.0, 0.0, partialFlow/sqrt(2), 7);
         }
         else if(n==4 || n==9 || n==10 || n==12)
         {
             double partialFlow = this->velocity;
-            FlowToNeighbours(partialFlow, 0.0, 0.0, 0.0);
+            //FlowToNeighbours(partialFlow, 0.0, 0.0, 0.0);
+            FlowToNeighbours2(partialFlow/sqrt(2), 0.0, 0.0, partialFlow/sqrt(2), 1);
         }
         else if(n==1 || n==5 || n==6 || n==11)
         {
             double partialFlow = this->velocity;
-            FlowToNeighbours(0.0, 0.0, 0.0, partialFlow);
+            //FlowToNeighbours(0.0, 0.0, 0.0, partialFlow);
+            FlowToNeighbours2(partialFlow/sqrt(2), 0.0, 0.0, partialFlow/sqrt(2), 7);
         }
         else if(s==4 || s==9)
         {
@@ -2272,17 +2375,21 @@ void Cell::FluidFlow()
         else if(n==7)
         {
             double partialFlow = this->velocity / 2;
-            FlowToNeighbours(0.0, partialFlow, partialFlow, 0.0);
+            //FlowToNeighbours(0.0, partialFlow, partialFlow, 0.0);
+            FlowToNeighbours2(0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 5);
+            FlowToNeighbours2(0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 3);
         }
         else if(n==13)
         {
             double partialFlow = this->velocity;
-            FlowToNeighbours(0.0, partialFlow, 0.0, 0.0);
+            //FlowToNeighbours(0.0, partialFlow, 0.0, 0.0);
+            FlowToNeighbours2(0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 3);
         }
         else if(n==14)
         {
             double partialFlow = this->velocity;
-            FlowToNeighbours(0.0, 0.0, partialFlow, 0.0);
+            //FlowToNeighbours(0.0, 0.0, partialFlow, 0.0);
+            FlowToNeighbours2(0.0, partialFlow/sqrt(2), partialFlow/sqrt(2), 0.0, 5);
         }
         else
         {
@@ -2659,6 +2766,41 @@ void Cell::FlowToNeighbours(double top_flow, double right_flow, double bottom_fl
     neighbours["Bottom"]->SetTopInput(bottom_flow);
     neighbours["Left"]->SetRightInput(left_flow);
     neighbours["Top"]->SetBottomInput(top_flow);
+    output_right_next = right_flow;
+    output_bottom_next = bottom_flow;
+    output_left_next = left_flow;
+    output_top_next = top_flow;
+    output_total_next += output_bottom_next + output_left_next + output_right_next + output_top_next;
+}
+
+void Cell::FlowToNeighbours2(double top_flow, double right_flow, double bottom_flow, double left_flow, int direction)
+{
+    switch (direction)
+    {
+        case 1:
+            this->neighbours["Top"]->SetBottomInput(top_flow);
+            this->neighbours["Top"]->SetLeftInput(right_flow);
+            this->neighbours["Top"]->SetRightInput(left_flow);
+            break;
+
+        case 3:
+            neighbours["Right"]->SetLeftInput(right_flow);
+            neighbours["Right"]->SetBottomInput(top_flow);
+            neighbours["Right"]->SetTopInput(bottom_flow);
+            break;
+
+        case 5:
+            neighbours["Bottom"]->SetTopInput(bottom_flow);
+            neighbours["Bottom"]->SetLeftInput(right_flow);
+            neighbours["Bottom"]->SetRightInput(left_flow);
+            break;
+
+        case 7:
+            neighbours["Left"]->SetRightInput(left_flow);
+            neighbours["Left"]->SetTopInput(bottom_flow);
+            neighbours["Left"]->SetBottomInput(top_flow);
+            break;
+    }
     output_right_next = right_flow;
     output_bottom_next = bottom_flow;
     output_left_next = left_flow;
