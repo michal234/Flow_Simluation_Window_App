@@ -109,17 +109,3 @@ double UserInterface::GetMaxValue(int variable)
         return this->results.GetMaxVelocityYValue();
     }
 }
-
-void UserInterface::ShowResultsMat(int variable)
-{
-    switch(variable)
-    {
-    case 1:
-        this->results.ShowVelocityMat();
-        break;
-
-    case 2:
-        this->results.ShowPressureMat();
-        break;
-    }
-}

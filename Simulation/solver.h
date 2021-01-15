@@ -36,8 +36,6 @@ class Solver
 
         void UpdateGrid();
 
-        void ShowStep();
-        void Standarization();
         void RemoveExtremalPoints();
 
     public:

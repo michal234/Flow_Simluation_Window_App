@@ -75,10 +75,8 @@ class Results
         double GetMinVelocityYValue();
         double GetMaxVelocityYValue();
 
-        void ShowVelocityMat();
-        void ShowPressureMat();
-
         QImage ShowScale();
+
 };
 
 #endif // RESULTS_H
